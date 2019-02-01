@@ -16,7 +16,7 @@ def dice_coef(y_true, y_pred, smooth=1):
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
 def dice_coef_loss(y_true, y_pred):
-    return -dice_coef(y_true, y_pred)
+    return 1-dice_coef(y_true, y_pred)
 
 def getUnet():
 
@@ -74,7 +74,7 @@ def getUnet():
     model = Model(input = inputs, output = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-            loss = 'binary_crossentropy',
-            metrics = ['acc', dice_coef])
+            loss = dice_coef_loss,
+            metrics = [dice_coef])
 
     return model

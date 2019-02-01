@@ -52,15 +52,26 @@ class DataHandler:
                 if img.shape[0] != 256 or img.shape[1] != 256:
                     break
 
+                # Normalize image so its between 0-255
+
+                rows, cols = img.shape
+
+                new_img = np.zeros((rows, cols))
+                max_val = np.max(img)
+
+                for i in range(rows):
+                    for j in range(rows):
+                        new_img[i,j] = int((float(img[i,j])/float(max_val)) * 255)
+
                 # add new channel axis to img and mask
-                img = img[..., np.newaxis]
+                img = new_img[..., np.newaxis]
                 mask = mask[..., np.newaxis]
 
                 images.append(img)
                 masks.append(mask)
 
-        images = np.array(images, dtype=np.uint8)
-        masks = np.array(masks, dtype=np.uint8)
+        images = np.array(images, dtype=np.uint16)
+        masks = np.array(masks, dtype=np.uint16)
 
         return (images, masks * 255)
 
@@ -88,5 +99,5 @@ class DataHandler:
             return tr_images, tr_masks, te_images, te_masks
 
         else:
-            te_images, _ = self.getTestData()
-            return te_images
+            te_images, te_masks = self.getTestData()
+            return (te_images, te_masks)
