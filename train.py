@@ -7,7 +7,7 @@ from datahandler import DataHandler
 from unet import *
 
 from keras.models import *
-from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import CSVLogger, ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from keras import backend as K
 from keras.preprocessing.image import ImageDataGenerator
 import warnings
@@ -17,19 +17,20 @@ warnings.filterwarnings("ignore")
 def resetSeed():
     np.random.seed(1)
 
-def getGenerator(images, masks):
+def getGenerator(images, masks, augmentation = False):
     resetSeed()
     seed = 1
 
     # TODO add augmentation
-    data_gen_args = dict(rescale=1./255)
-   # ,
-    #         featurewise_center=True,
-    #         featurewise_std_normalization=True,
-    #         rotation_range=90,
-    #         width_shift_range=0.1,
-    #         height_shift_range=0.1,
-    #         zoom_range=0.2)
+
+    if augmentation:
+        data_gen_args = dict(rescale=1./255,
+            rotation_range=60,
+            width_shift_range=0.1,
+            height_shift_range=0.1,
+            zoom_range=0.2)
+    else:
+        data_gen_args = dict(rescale=1./255)
 
     image_datagen = ImageDataGenerator(**data_gen_args)
     mask_datagen = ImageDataGenerator(**data_gen_args)
@@ -39,10 +40,8 @@ def getGenerator(images, masks):
 
     save_dir = './data/augmented/'
 
-    image_generator = image_datagen.flow(x = images, seed=seed,
-            shuffle=False) #, save_to_dir = save_dir, save_prefix = 'img')
-    mask_generator = mask_datagen.flow(x = masks, seed=seed,
-            shuffle=False) #, save_to_dir = save_dir, save_prefix = 'mask')
+    image_generator = image_datagen.flow(x = images, batch_size=32, seed=seed)
+    mask_generator = mask_datagen.flow(x = masks, batch_size=32, seed=seed)
 
     generator = zip(image_generator, mask_generator)
 
@@ -63,8 +62,8 @@ for i, img in enumerate(tqdm(tr_images, desc='Saving Imgs')):
     io.imsave(os.path.join(save_path,"%d_img.png"%i), np.squeeze(img))
     io.imsave(os.path.join(save_path,"%d_msk.png"%i), np.squeeze(tr_masks[i]))
 
-train_generator = getGenerator(tr_images, tr_masks)
-val_generator = getGenerator(te_images, te_masks)
+train_generator = getGenerator(tr_images, tr_masks, augmentation = True)
+val_generator = getGenerator(te_images, te_masks, augmentation = False)
 
 model = getUnet()
 
@@ -83,14 +82,13 @@ checkpoint = ModelCheckpoint(check_point_name,
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
-        mode='min',
         period=1)
 
 early = EarlyStopping(monitor='val_loss',
-        min_delta=0.001,
+        min_delta=0,
         patience=10,
         verbose=1,
-        mode='min')
+        restore_best_weights=True)
 
 reduce_lr = ReduceLROnPlateau(monitor='val_loss',
         factor=0.1,
@@ -98,11 +96,13 @@ reduce_lr = ReduceLROnPlateau(monitor='val_loss',
         min_lr=0.000001,
         verbose=1)
 
+csv_logger = CSVLogger('log.csv', separator=',', append=True)
+
 history = model.fit_generator(train_generator,
         epochs=epochs,
         steps_per_epoch = len(tr_images) / batch_size,
         validation_data = val_generator,
         validation_steps = len(te_images) / batch_size,
         verbose = 1,
-        callbacks = [checkpoint, early, reduce_lr])
+        callbacks = [checkpoint, early, reduce_lr, csv_logger])
 

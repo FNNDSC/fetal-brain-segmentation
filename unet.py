@@ -1,13 +1,12 @@
 import numpy as np
+import keras
 from keras.models import *
 from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, UpSampling2D, concatenate
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-from keras import backend as keras
+from keras import backend as K
 
 import tensorflow as tf
-
-
 
 def dice_coef(y_true, y_pred, smooth=1):
     y_true_f = K.flatten(y_true)
@@ -15,8 +14,8 @@ def dice_coef(y_true, y_pred, smooth=1):
     intersection = K.sum(y_true_f * y_pred_f)
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
-def dice_coef_loss(y_true, y_pred):
-    return 1-dice_coef(y_true, y_pred)
+def bce_dice_loss(y_true, y_pred):
+    return 0.5 * keras.losses.binary_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
 
 def getUnet():
 
@@ -74,7 +73,7 @@ def getUnet():
     model = Model(input = inputs, output = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-            loss = dice_coef_loss,
+            loss = bce_dice_loss,
             metrics = [dice_coef])
 
     return model

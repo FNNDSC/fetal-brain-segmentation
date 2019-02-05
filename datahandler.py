@@ -4,16 +4,29 @@ import tqdm
 
 import numpy as np
 import nibabel as nib
+from medpy.io import load
 
 class DataHandler:
 
 
     def __init__(self):
-        self._imgs_train_dir = 'data/train/images/*'
-        self._imgs_test_dir = 'data/test/images/*'
+        self._imgs_train_dir = 'data/train/axial_only/images/*'
+        self._imgs_test_dir = 'data/test/axial_only/images/*'
 
-        self._masks_train_dir = 'data/train/masks/*'
-        self._masks_test_dir = 'data/test/masks/*'
+        self._masks_train_dir = 'data/train/axial_only/masks/*'
+        self._masks_test_dir = 'data/test/axial_only/masks/*'
+
+    # values must be between 0 and 255
+    def __normalize0_255(self, img_slice):
+        rows, cols = img_slice.shape
+        new_img = np.zeros((rows, cols))
+        max_val = np.max(img_slice)
+
+        for i in range(rows):
+            for j in range(rows):
+                new_img[i,j] = int((float(img_slice[i,j])/float(max_val)) * 255)
+
+        return new_img
 
     # Receives array of file names and
     # corresponding index
@@ -53,15 +66,7 @@ class DataHandler:
                     break
 
                 # Normalize image so its between 0-255
-
-                rows, cols = img.shape
-
-                new_img = np.zeros((rows, cols))
-                max_val = np.max(img)
-
-                for i in range(rows):
-                    for j in range(rows):
-                        new_img[i,j] = int((float(img[i,j])/float(max_val)) * 255)
+                new_img = self.__normalize0_255(img)
 
                 # add new channel axis to img and mask
                 img = new_img[..., np.newaxis]
@@ -86,6 +91,26 @@ class DataHandler:
         return self.__getImages(self._imgs_test_dir,
                 self._masks_test_dir,
                 desc = 'Validation data')
+
+    #return image data
+    def getImageData(self, fname):
+        # get image data and header, must use med.py
+        # for internal process of getting header info
+        data, hdr = load(fname)
+
+        # switch axis
+        data = np.moveaxis(data, -1, 0)
+        norm_data = []
+
+        # normalize each slice
+        for i in range(data.shape[0]):
+            img_slice = data[i,:,:]
+            norm_data.append(self.__normalize0_255(img_slice))
+
+        #change to numpy array and add axis
+        norm_data = np.array(norm_data, dtype=np.uint16)
+        data = data[..., np.newaxis]
+        return data, hdr
 
     # return arrays containing all training and test data
     # as single 2D slices
