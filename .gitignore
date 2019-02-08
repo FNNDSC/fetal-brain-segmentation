@@ -1,1 +1,7 @@
 *.h5
+*.csv
+*.json
+data/**/*
+logs/**/*
+weights/**/*
+Pipfile*

@@ -40,7 +40,7 @@ class DataHandler:
     # returns a tuple with two arrays for
     # all images and masks
     def __getImages(self, images_dir, masks_dir,
-            desc = 'Data aquisition'):
+            desc = 'Data aquisition', has_3_channels = False):
         images, masks = [], []
 
         #sorted as to insure img/msk match
@@ -72,7 +72,10 @@ class DataHandler:
                 img = new_img[..., np.newaxis]
                 mask = mask[..., np.newaxis]
 
-                images.append(img)
+                if has_3_channels:
+                    images.append(np.array(np.dstack((img,img,img))))
+                else:
+                    images.append(img)
                 masks.append(mask)
 
         images = np.array(images, dtype=np.uint16)
@@ -81,16 +84,16 @@ class DataHandler:
         return (images, masks * 255)
 
     # return tuple containing training data
-    def getTrainData(self):
+    def getTrainData(self, has_3_channels = False):
         return self. __getImages(self._imgs_train_dir,
                 self._masks_train_dir,
-                desc = 'Training data')
+                desc = 'Training data', has_3_channels = has_3_channels)
 
     # return tuple containing testing data
-    def getTestData(self):
+    def getTestData(self, has_3_channels = False):
         return self.__getImages(self._imgs_test_dir,
                 self._masks_test_dir,
-                desc = 'Validation data')
+                desc = 'Validation data', has_3_channels = has_3_channels)
 
     #return image data
     def getImageData(self, fname):
@@ -115,14 +118,15 @@ class DataHandler:
     # return arrays containing all training and test data
     # as single 2D slices
     # when only_test active returns only the testing images
-    def getData(self, only_test =
-            False):
-        if not only_test:
-            tr_images, tr_masks = self.getTrainData()
-            te_images, te_masks = self.getTestData()
+    def getData(self,
+            only_test = False,
+            has_3_channels = False):
 
+        if not only_test:
+            tr_images, tr_masks = self.getTrainData(has_3_channels = has_3_channels)
+            te_images, te_masks = self.getTestData(has_3_channels = has_3_channels)
             return tr_images, tr_masks, te_images, te_masks
 
         else:
-            te_images, te_masks = self.getTestData()
+            te_images, te_masks = self.getTestData(has_3_channels = has_3_channels)
             return (te_images, te_masks)
