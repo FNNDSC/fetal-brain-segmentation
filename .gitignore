@@ -5,3 +5,5 @@ data/**/*
 logs/**/*
 weights/**/*
 Pipfile*
+json_models/**/*
+failed*/**/*

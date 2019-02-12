@@ -10,11 +10,11 @@ class DataHandler:
 
 
     def __init__(self):
-        self._imgs_train_dir = 'data/train/axial_only/images/*'
-        self._imgs_test_dir = 'data/test/axial_only/images/*'
+        self._imgs_train_dir = 'data/train/images/*'
+        self._imgs_test_dir = 'data/test/images/*'
 
-        self._masks_train_dir = 'data/train/axial_only/masks/*'
-        self._masks_test_dir = 'data/test/axial_only/masks/*'
+        self._masks_train_dir = 'data/train//masks/*'
+        self._masks_test_dir = 'data/test/masks/*'
 
     # values must be between 0 and 255
     def __normalize0_255(self, img_slice):
