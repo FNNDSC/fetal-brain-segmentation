@@ -7,6 +7,8 @@ from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras import backend as K
 
+from keras.losses import binary_crossentropy
+
 import tensorflow as tf
 
 def getUnet():
@@ -66,7 +68,7 @@ def getUnet():
     model = Model(input = inputs, output = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-            loss = dice_loss,
+            loss = bce_dice_loss,
             metrics = [dice_coef, dice_loss, border_dice_coef,
                 dice_border_loss, bce_dice_loss])
 
