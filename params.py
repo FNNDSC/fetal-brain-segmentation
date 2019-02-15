@@ -1,7 +1,7 @@
 def getParams(exp_name):
     # General Training
-    epochs = 100
-    batch_size = 32
+    epochs = 80
+    batch_size = 16
     monitor = 'val_loss'
     verbose = 1
     train_augmantation = True
