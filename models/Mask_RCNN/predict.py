@@ -128,9 +128,9 @@ class InferenceConfig(BrainSegConfig):
 
 inference_config = InferenceConfig()
 
-dataset_train = BrainDataset()
-dataset_train.load_brain_data('../../data/train/axial_only/vis_img/*','../../data/train/axial_only/vis_mask/*')
-dataset_train.prepare()
+dataset_test = BrainDataset()
+dataset_test.load_brain_data('../../data/test/images/*','../../data/test/masks/*')
+dataset_test.prepare()
 
 LOG_DIR = os.path.join(ROOT_DIR, 'logs')
 MODEL_DIR = os.path.join(LOG_DIR, "mask_rcnn")
@@ -141,19 +141,19 @@ model = modellib.MaskRCNN(
         model_dir=MODEL_DIR
         )
 
-model_path = model.find_last()
+model_path = '../../logs/mask_rcnn/fetalbrainsegmentation_v220190215T1643/mask_rcnn_fetalbrainsegmentation_v2_0009.h5'
 print(model_path)
 
 model.load_weights(model_path, by_name=True)
 
 
-for i in dataset_train.image_ids:
+for i in dataset_test.image_ids:
     save_path = '../../data/vis/'
 
-    image = dataset_train.load_image(i)
+    image = dataset_test.load_image(i)
 
     results = model.detect([image], verbose = 1)
     r = results[0]
 
     visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'],
-            dataset_train.class_names, r['scores'], img_id=i)
+            dataset_test.class_names, r['scores'], img_id=i)

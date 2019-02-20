@@ -1,4 +1,4 @@
-from keras.callbacks import CSVLogger, ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 
 def getCallbacks(params):
     verbose = params['verbose']
@@ -38,4 +38,6 @@ def getCallbacks(params):
          separator = log_params['separator'],
          append = log_params['append'])
 
-    return Checkpoint, EarlyStop, ReduceLR, Logger
+    TenBoard = TensorBoard(params['log_dir_name'])
+
+    return Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard

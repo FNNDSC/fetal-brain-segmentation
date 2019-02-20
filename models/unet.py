@@ -70,6 +70,6 @@ def getUnet():
     model.compile(optimizer = Adam(lr = 1e-4),
             loss = bce_dice_loss,
             metrics = [dice_coef, dice_loss, border_dice_coef,
-                dice_border_loss, bce_dice_loss])
+                border_dice_loss, dice_border_loss, bce_dice_loss])
 
     return model

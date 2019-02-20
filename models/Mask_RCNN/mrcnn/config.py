@@ -22,7 +22,7 @@ class Config(object):
     # Name the configurations. For example, 'COCO', 'Experiment 3', ...etc.
     # Useful if your code needs to do things differently depending on which
     # experiment is running.
-    NAME = 'FetalBrainSegmentation'  # Override in sub-classes
+    NAME = None  # Override in sub-classes
 
     # NUMBER OF GPUs to use. When using only a CPU, this needs to be set to 1.
     GPU_COUNT = 1

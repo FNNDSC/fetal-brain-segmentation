@@ -50,7 +50,7 @@ batch_size = params['batch_size']
 verbose = params['verbose']
 val_to_monitor = params['val_to_monitor']
 
-Checkpoint, EarlyStop, ReduceLR, Logger = getCallbacks(params)
+Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
 
 #Train the model
 history = model.fit_generator(train_generator,
@@ -59,5 +59,5 @@ history = model.fit_generator(train_generator,
         validation_data = val_generator,
         validation_steps = len(te_images) / batch_size,
         verbose = verbose,
-        callbacks = [Checkpoint, EarlyStop, ReduceLR, Logger])
+        callbacks = [Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard])
 

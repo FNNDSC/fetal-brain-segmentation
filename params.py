@@ -1,7 +1,7 @@
 def getParams(exp_name):
     # General Training
-    epochs = 80
-    batch_size = 16
+    epochs = 100
+    batch_size = 32
     monitor = 'val_loss'
     verbose = 1
     train_augmantation = True
@@ -9,6 +9,7 @@ def getParams(exp_name):
     # File names
     cp_name = './weights/%s_weights.h5'%exp_name
     log_name = './logs/%s_log.csv'%exp_name
+    log_dir_name = './logs/%s'%exp_name
     model_name = './json_models/%s'%exp_name
 
     #Checkpoint
@@ -17,7 +18,7 @@ def getParams(exp_name):
     period = 1
 
     #Earyl Stopping
-    es_patience = 15
+    es_patience = 10
     min_delta = 0
     restore_best_weights = True
 
@@ -37,6 +38,7 @@ def getParams(exp_name):
             'val_to_monitor': monitor,
             'train_augmantation': train_augmantation,
             'model_name': model_name,
+            'log_dir_name': log_dir_name,
             'checkpoint': {
                 'name': cp_name,
                 'save_best_only': save_best_only,

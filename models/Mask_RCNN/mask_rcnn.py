@@ -18,26 +18,35 @@ import numpy as np
 import nibabel as nib
 from medpy.io import load
 import skimage.color
+from imgaug import augmenters as iaa
+
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
 
 class BrainSegConfig(Config):
-    NAME = 'FetalBrainSegmentation_v2'
+    NAME = 'Resnet50TransferLearningDataAug'
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 8
+    IMAGES_PER_GPU = 4
 
-    BACKBONE = 'resnet101'
+    BACKBONE = 'resnet50'
 
-    NUM_CLASSES = 1 + 1 #background + 1 shape
+    NUM_CLASSES = 2
 
     IMAGE_MIN_DIM = 256
     IMAGE_MAX_DIM = 256
 
-    #mejorar
-    STEPS_PER_EPOCH = 202
-    TRAIN_ROIS_PER_IMAGE = 32
+    TRAIN_ROIS_PER_IMAGE = 100
+
+    STEPS_PER_EPOCH = 404 * 4
+    VALIDATION_STEPS = 116 * 4
+
+    TRAIN_BN = None
+    RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
+
     MAX_GT_INSTANCES = 1
 
     DETECTION_MAX_INSTANCES = 1
-    DETECTION_MIN_CONFIDENCE = 0.8
+    DETECTION_MIN_CONFIDENCE = 0.6
 
 class BrainDataset(utils.Dataset):
     """
@@ -130,18 +139,26 @@ model = modellib.MaskRCNN(mode='training', config=config, model_dir=MODEL_DIR)
 params = getParams('Mask_RCNN')
 
 epochs = params['epochs']
-batch_size = params['batch_size']
-verbose = params['verbose']
-val_to_monitor = params['val_to_monitor']
-
-Checkpoint, EarlyStop, ReduceLR, Logger = getCallbacks(params)
+Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
 
 COCO_MODEL_PATH = 'mask_rcnn_coco.h5'
 model.load_weights(COCO_MODEL_PATH, by_name=True,
         exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
             "mrcnn_bbox", "mrcnn_mask"])
 
+augmentation = iaa.SomeOf((0, 3),[
+    iaa.Fliplr(0.5),
+    iaa.Flipud(0.5),
+    iaa.OneOf([
+        iaa.Affine(rotate=90),
+        iaa.Affine(rotate=180),
+        iaa.Affine(rotate=270)]),
+    iaa.Multiply((0.8, 1.5)),
+    iaa.GaussianBlur(sigma=(0.0, 5.0))])
+
 model.train(dataset_train, dataset_val,
         learning_rate=config.LEARNING_RATE,
         epochs = epochs,
+        augmentation = augmentation,
+        custom_callbacks = [EarlyStop],
         layers = 'all')
