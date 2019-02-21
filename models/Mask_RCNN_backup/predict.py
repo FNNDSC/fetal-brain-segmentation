@@ -18,35 +18,32 @@ import numpy as np
 import nibabel as nib
 from medpy.io import load
 import skimage.color
-from imgaug import augmenters as iaa
-
-from tensorflow.python.client import device_lib
-print(device_lib.list_local_devices())
+import skimage.io as io
 
 class BrainSegConfig(Config):
-    NAME = 'Resnet50TransferLearningDataAug'
+    NAME = 'FetalBrainSegmentation'
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 4
+    IMAGES_PER_GPU = 8
 
     BACKBONE = 'resnet50'
 
-    NUM_CLASSES = 2
+    NUM_CLASSES = 1 + 1 #background + 1 shape
 
     IMAGE_MIN_DIM = 256
     IMAGE_MAX_DIM = 256
 
-    TRAIN_ROIS_PER_IMAGE = 100
-
-    STEPS_PER_EPOCH = 404 * 4
-    VALIDATION_STEPS = 116 * 4
-
-    TRAIN_BN = None
-    RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
-
+    #check if 1 or 2
     MAX_GT_INSTANCES = 1
 
     DETECTION_MAX_INSTANCES = 1
-    DETECTION_MIN_CONFIDENCE = 0.6
+
+    #mejorar
+    STEPS_PER_EPOCH = 202
+    TRAIN_ROIS_PER_IMAGE = 32
+    MAX_GT_INSTANCES = 1
+    DETECTION_MAX_INSTANCES = 3
+    DETECTION_MIN_CONFIDENCE = 0.5
+    DETECTION_NMS_THRESHOLD = 0.2
 
 class BrainDataset(utils.Dataset):
     """
@@ -122,43 +119,39 @@ class BrainDataset(utils.Dataset):
         return self.image_info[image_id]
 
 
-config = BrainSegConfig()
 
-dataset_train = BrainDataset()
-dataset_train.load_brain_data('../../data/train/images/*','../../data/train/masks/*')
-dataset_train.prepare()
 
-dataset_val = BrainDataset()
-dataset_val.load_brain_data('../../data/test/images/*','../../data/test/masks/*')
-dataset_val.prepare()
+class InferenceConfig(BrainSegConfig):
+    GPU_COUNT=1
+
+inference_config = InferenceConfig()
+
+dataset_test = BrainDataset()
+dataset_test.load_brain_data('../../data/test/images/*','../../data/test/masks/*')
+dataset_test.prepare()
 
 LOG_DIR = os.path.join(ROOT_DIR, 'logs')
 MODEL_DIR = os.path.join(LOG_DIR, "mask_rcnn")
-model = modellib.MaskRCNN(mode='training', config=config, model_dir=MODEL_DIR)
 
-params = getParams('Mask_RCNN')
+model = modellib.MaskRCNN(
+        mode='inference',
+        config=inference_config,
+        model_dir=MODEL_DIR
+        )
 
-epochs = params['epochs']
-Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
+model_path = '../../logs/mask_rcnn/resnet50transferlearningdataaug20190220T1029/mask_rcnn_resnet50transferlearningdataaug_0012.h5'
+print(model_path)
 
-COCO_MODEL_PATH = 'mask_rcnn_coco.h5'
-model.load_weights(COCO_MODEL_PATH, by_name=True,
-        exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
-            "mrcnn_bbox", "mrcnn_mask"])
+model.load_weights(model_path, by_name=True)
 
-augmentation = iaa.SomeOf((0, 3),[
-    iaa.Fliplr(0.5),
-    iaa.Flipud(0.5),
-    iaa.OneOf([
-        iaa.Affine(rotate=90),
-        iaa.Affine(rotate=180),
-        iaa.Affine(rotate=270)]),
-    iaa.Multiply((0.8, 1.5)),
-    iaa.GaussianBlur(sigma=(0.0, 5.0))])
 
-model.train(dataset_train, dataset_val,
-        learning_rate=config.LEARNING_RATE,
-        epochs = epochs,
-        augmentation = augmentation,
-        custom_callbacks = [EarlyStop],
-        layers = 'all')
+for i in dataset_test.image_ids:
+    save_path = '../../data/vis/'
+
+    image = dataset_test.load_image(i)
+
+    results = model.detect([image], verbose = 1)
+    r = results[0]
+
+    visualize.display_instances(image, r['rois'], r['masks'], r['class_ids'],
+            dataset_test.class_names, r['scores'], img_id=i)
