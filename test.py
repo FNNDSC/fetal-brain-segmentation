@@ -4,7 +4,7 @@ from keras.models import *
 from keras import backend as K
 from keras.preprocessing.image import ImageDataGenerator
 
-from unet import *
+from models.unet import *
 from datahandler import DataHandler
 
 import os
@@ -17,7 +17,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 model = getUnet()
-model.load_weights('unet_brain_seg.h5')
+model.load_weights('logs/unet/unetBceDice/unetBceDice_weights.h5')
 
 dh = DataHandler()
 images, masks = dh.getData(only_test = True)
@@ -42,7 +42,10 @@ def getGenerator(images):
 
 test_gen = getGenerator(images)
 
-results = model.predict_generator(test_gen, ceil(len(images) / 32), verbose = 1)
+results = model.predict_generator(test_gen, ceil(len(images) / 16), verbose = 1)
 
 for i, mask in enumerate(tqdm(results, desc='Saving Masks')):
+    print(mask.shape)
+    print(np.min(mask))
+    print(np.max(mask))
     io.imsave(os.path.join(save_path, '%i_prediction.png'%i), np.squeeze(mask))

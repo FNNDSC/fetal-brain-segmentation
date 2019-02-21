@@ -4,6 +4,10 @@ from generator import *
 from params import *
 from callbacks import getCallbacks
 
+from tqdm import tqdm
+import os
+import skimage.io as io
+
 from keras.models import *
 from keras import backend as K
 
@@ -27,6 +31,12 @@ resetSeed()
 dh = DataHandler()
 tr_images, tr_masks, te_images, te_masks = dh.getData()
 
+# TODO remove this
+# save_path = './data/as_read/'
+# for i, img in enumerate(tqdm(tr_images, desc='Saving Imgs')):
+#     io.imsave(os.path.join(save_path,"%d_img.png"%i), np.squeeze(img))
+#     io.imsave(os.path.join(save_path,"%d_msk.png"%i), np.squeeze(tr_masks[i]))
+
 train_generator = getGenerator(tr_images, tr_masks,
         augmentation = params['train_augmantation'])
 val_generator = getGenerator(te_images, te_masks,
@@ -36,7 +46,7 @@ val_generator = getGenerator(te_images, te_masks,
 model = getUnet()
 
 #load weights from other problem transfer learning
-# model.load_weights('./weights/unet_transfer.h5')
+#model.load_weights('./weights/unet_transfer.h5')
 
 # print(model.summary())
 

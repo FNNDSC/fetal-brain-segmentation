@@ -26,7 +26,9 @@ def getGenerator(images, masks, augmentation = False):
     save_dir = './data/augmented/'
 
     image_generator = image_datagen.flow(x = images, batch_size=16, seed=seed)
+            # save_to_dir=save_dir)
     mask_generator = mask_datagen.flow(x = masks, batch_size=16, seed=seed)
+            # save_to_dir=save_dir)
 
     generator = zip(image_generator, mask_generator)
 
