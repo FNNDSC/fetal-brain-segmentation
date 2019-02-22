@@ -42,7 +42,7 @@ class BrainSegConfig(Config):
     TRAIN_ROIS_PER_IMAGE = 32
     MAX_GT_INSTANCES = 1
     DETECTION_MAX_INSTANCES = 3
-    DETECTION_MIN_CONFIDENCE = 0.5
+    DETECTION_MIN_CONFIDENCE = 0
     DETECTION_NMS_THRESHOLD = 0.2
 
 class BrainDataset(utils.Dataset):
