@@ -18,6 +18,15 @@ class DataHandler:
 
     # values must be between 0 and 255
     def __normalize0_255(self, img_slice):
+        img_slice[img_slice < 0] = 0
+        flat_sorted = np.sort(img_slice.flatten())
+
+        top_3_limit = int(len(flat_sorted) * 0.97)
+        limit = flat_sorted[top_3_limit]
+
+        img_slice[img_slice > limit] = limit
+
+
         rows, cols = img_slice.shape
         new_img = np.zeros((rows, cols))
         max_val = np.max(img_slice)
@@ -25,6 +34,8 @@ class DataHandler:
         for i in range(rows):
             for j in range(rows):
                 new_img[i,j] = int((float(img_slice[i,j])/float(max_val)) * 255)
+
+        new_img = (new_img - new_img.mean()) / new_img.std()
 
         return new_img
 

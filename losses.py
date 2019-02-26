@@ -39,8 +39,8 @@ def border_dice_loss(y_true, y_pred):
 
 ### DICE + BORDER LOSS
 def dice_border_loss(y_true, y_pred):
-    return (border_dice_loss(y_true, y_pred) * 0.15 +
-            (dice_loss(y_true, y_pred) * 0.85))
+    return (border_dice_loss(y_true, y_pred) * 0.05 +
+            (dice_loss(y_true, y_pred) * 0.95))
 
 ### BCE
 def bce_dice_loss(y_true, y_pred):

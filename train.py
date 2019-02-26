@@ -25,6 +25,12 @@ exp_name = args.exp
 #get parameters
 params = getParams(exp_name)
 
+#set common variables
+epochs = params['epochs']
+batch_size = params['batch_size']
+verbose = params['verbose']
+val_to_monitor = params['val_to_monitor']
+
 resetSeed()
 
 #Get data and generators
@@ -38,9 +44,9 @@ tr_images, tr_masks, te_images, te_masks = dh.getData()
 #     io.imsave(os.path.join(save_path,"%d_msk.png"%i), np.squeeze(tr_masks[i]))
 
 train_generator = getGenerator(tr_images, tr_masks,
-        augmentation = params['train_augmantation'])
+        augmentation = params['train_augmantation'], batch_size=batch_size)
 val_generator = getGenerator(te_images, te_masks,
-        augmentation = False)
+        augmentation = False, batch_size=batch_size)
 
 #Get model and add weights
 model = getUnet()
@@ -53,12 +59,6 @@ model = getUnet()
 model_json = model.to_json()
 with open(params['model_name'], "w") as json_file:
      json_file.write(model_json)
-
-#set common variables
-epochs = params['epochs']
-batch_size = params['batch_size']
-verbose = params['verbose']
-val_to_monitor = params['val_to_monitor']
 
 Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
 

@@ -27,7 +27,7 @@ def getParams(exp_name):
     period = 1
 
     #Earyl Stopping
-    es_patience = 20
+    es_patience = 10
     min_delta = 0
     restore_best_weights = True
 

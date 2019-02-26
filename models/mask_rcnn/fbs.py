@@ -28,7 +28,7 @@ DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
 DEFAULT_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'mask_rcnn')
 
 class FBSConfig(Config):
-    NAME = 'FBS_RESNET50_DA_TF_WEIGHTEDLOSS_'
+    NAME = 'FBS_RESNET50_DA_TF_NOMINIMASK_'
 
     IMAGES_PER_GPU = 4
 
@@ -60,10 +60,13 @@ class FBSConfig(Config):
     # then 0.5 is the minimum anyway as it picks between brain and BG
     DETECTION_MIN_CONFIDENCE = 0
 
+    USE_MINI_MASK = False
+
     IMAGE_MIN_DIM = 256
     IMAGE_MAX_DIM = 256
+    IMAGE_RESIZE_MODE = "square"
 
-    MEAN_PIXEL = np.array([45.6, 45.6, 45.6])
+    MEAN_PIXEL = np.array([73.99, 73.99, 73.99])
     TRAIN_BN = None
 
     # Number of ROIs per image to feed to classifier/mask heads
@@ -79,23 +82,10 @@ class FBSConfig(Config):
     # Max number of final detections per image
     DETECTION_MAX_INSTANCES = 1
 
-    LOSS_WEIGHTS = {
-        "rpn_class_loss": 0.,
-        "rpn_bbox_loss": 0.2,
-        "mrcnn_class_loss": 0.,
-        "mrcnn_bbox_loss": 0.2,
-        "mrcnn_mask_loss": 1.
-    }
-
 class FBSInferenceConfig(FBSConfig):
     # Set batch size to 1 to run one image at a time
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
-    # Don't resize imager for inferencing
-    IMAGE_RESIZE_MODE = "pad64"
-    # Non-max suppression threshold to filter RPN proposals.
-    # You can increase this during training to generate more propsals.
-    RPN_NMS_THRESHOLD = 0.7
 
 #######################################################################
 #   Data
@@ -108,6 +98,15 @@ class FBSDataset(utils.Dataset):
     """
     # values must be between 0 and 255
     def __normalize0_255(self, img_slice):
+        # Intensity normalization
+        img_slice[img_slice < 0] = 0
+        flat_sorted = np.sort(img_slice.flatten())
+
+        top_3_limit = int(len(flat_sorted) * 0.97)
+        limit = flat_sorted[top_3_limit]
+
+        img_slice[img_slice > limit] = limit
+
         rows, cols = img_slice.shape
         new_img = np.zeros((rows, cols))
         max_val = np.max(img_slice)
@@ -154,8 +153,8 @@ class FBSDataset(utils.Dataset):
                 mask = np.array(mask_slices[:,:,j])
 
                 # skip images that are not 256x256
-                if img.shape[0] != 256 or img.shape[1] != 256:
-                    break
+                #if img.shape[0] != 256 or img.shape[1] != 256:
+                    #break
 
                 # Normalize image so its between 0-255
                 new_img = self.__normalize0_255(img)
