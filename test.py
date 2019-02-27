@@ -11,13 +11,12 @@ import os
 import skimage.io as io
 from tqdm import tqdm
 from math import ceil
-
 # TODO remove this
 import warnings
 warnings.filterwarnings("ignore")
 
 model = getUnet()
-model.load_weights('logs/unet/unetBceDice/unetBceDice_weights.h5')
+model.load_weights('logs/unet/unet_dice_nobells/unet_dice_nobells_weights.h5')
 
 dh = DataHandler()
 images, masks = dh.getData(only_test = True)
@@ -40,12 +39,30 @@ def getGenerator(images):
 
     return image_generator
 
+
+def dice_coef(y_true, y_pred, smooth=1):
+    y_true = np.logical_not(np.asarray(y_true).astype(np.bool))
+    y_pred = np.asarray(y_pred).astype(np.bool)
+
+    im_sum = y_true.sum() + y_pred.sum()
+
+    if im_sum == 0:
+        return 1.0
+
+    intersection = np.logical_and(y_true, y_pred)
+    return 2. * intersection.sum() / im_sum
+
+
 test_gen = getGenerator(images)
 
-results = model.predict_generator(test_gen, ceil(len(images) / 16), verbose = 1)
+results = model.predict_generator(test_gen, ceil(len(images) / 32), verbose = 1)
+dice_scores = []
 
-for i, mask in enumerate(tqdm(results, desc='Saving Masks')):
-    print(mask.shape)
-    print(np.min(mask))
-    print(np.max(mask))
-    io.imsave(os.path.join(save_path, '%i_prediction.png'%i), np.squeeze(mask))
+for i, pred in enumerate(tqdm(results, desc='Saving Masks')):
+    m = masks[i]
+    p = pred
+    s = (dice_coef(m,p))
+    dice_scores.append(s)
+    io.imsave(os.path.join(save_path, '%i_pred.png'%i), np.squeeze(pred))
+
+print(np.mean(dice_scores))
