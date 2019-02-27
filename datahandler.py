@@ -35,7 +35,7 @@ class DataHandler:
             for j in range(rows):
                 new_img[i,j] = int((float(img_slice[i,j])/float(max_val)) * 255)
 
-        new_img = (new_img - new_img.mean()) / new_img.std()
+        # new_img = (new_img - new_img.mean()) / new_img.std()
 
         return new_img
 
