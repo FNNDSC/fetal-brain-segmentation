@@ -12,14 +12,13 @@ def getParams(exp_name):
     # cp_name = './weights/%s_weights.h5'%exp_name
     # log_name = './logs/%s_log.csv'%exp_name
     log_dir_name = './logs/unet/%s'%exp_name
-    model_name = './json_models/%s.json'%exp_name
 
     if not os.path.exists(log_dir_name):
         os.makedirs(log_dir_name)
 
     cp_name = os.path.join(log_dir_name, '%s_weights.h5'%exp_name)
     log_name = os.path.join(log_dir_name, '%s_log.csv'%exp_name)
-
+    json_name = os.path.joing(log_dir_name, '%s_model.json'%exp_name)
 
     #Checkpoint
     save_best_only = True
@@ -46,7 +45,7 @@ def getParams(exp_name):
             'verbose': verbose,
             'val_to_monitor': monitor,
             'train_augmantation': train_augmantation,
-            'model_name': model_name,
+            'model_name': json_name,
             'log_dir_name': log_dir_name,
             'checkpoint': {
                 'name': cp_name,

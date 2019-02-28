@@ -9,5 +9,5 @@ sys.path.append(ROOT_DIR)
 DATASET_DIR = os.path.join(ROOT_DIR, 'data/')
 
 train(DATASET_DIR,
-        augment=True,
+        augment=False,
         pretrained_coco=True)

@@ -44,7 +44,8 @@ tr_images, tr_masks, te_images, te_masks = dh.getData()
 #     io.imsave(os.path.join(save_path,"%d_msk.png"%i), np.squeeze(tr_masks[i]))
 
 train_generator = getGenerator(tr_images, tr_masks,
-        augmentation = params['train_augmantation'], batch_size=batch_size)
+        augmentation = False, batch_size=batch_size)
+        #params['train_augmantation'], batch_size=batch_size)
 val_generator = getGenerator(te_images, te_masks,
         augmentation = False, batch_size=batch_size)
 

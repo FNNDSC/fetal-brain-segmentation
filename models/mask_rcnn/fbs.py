@@ -20,6 +20,10 @@ from mrcnn import utils
 from mrcnn import model as modellib
 from mrcnn import visualize
 
+from losses import dice_coef
+from keras.callbacks import Callback
+import tensorflow as tf
+
 from tensorflow.python.client import device_lib
 print(device_lib.list_local_devices())
 
@@ -28,7 +32,7 @@ DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
 DEFAULT_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'mask_rcnn')
 
 class FBSConfig(Config):
-    NAME = 'FBS_RESNET50_DA_TF_NOMINIMASK_'
+    NAME = 'FBS_RESNET50_TF_NOMINIMASK_'
 
     IMAGES_PER_GPU = 4
 
@@ -114,8 +118,8 @@ class FBSDataset(utils.Dataset):
         for i in range(rows):
             for j in range(rows):
                 new_img[i,j] = int((
-                    float(img_slice[i,j])/float(max_val))
-                    * 255)
+                    float(img_slice[i,j])/float(max_val)) * 255)
+
         return new_img
 
     def load_data(self, dataset_dir, subset='train'):
@@ -167,11 +171,11 @@ class FBSDataset(utils.Dataset):
                 new_img = np.array(new_img, dtype=np.uint16)
 
                 self.add_image('MRI',
+                        image=new_img,
+                        mask=mask,
                         image_id=img_id,
                         path=img_path,
                         mask_path=mask_path,
-                        image=new_img,
-                        mask=mask,
                         width=256,
                         height=256)
 
@@ -187,6 +191,7 @@ class FBSDataset(utils.Dataset):
     def image_reference(self, image_id):
         """Return the shapes data of the image."""
         return self.image_info[image_id]
+
 
 def train(dataset_dir, augment = False,
         pretrained_coco = False):
@@ -220,7 +225,6 @@ def train(dataset_dir, augment = False,
     epochs = params['epochs']
 
     #TODO remove useless callbacks
-    _, EarlyStop, _, _, _ = getCallbacks(params)
 
     if pretrained_coco:
         COCO_MODEL_PATH = 'mask_rcnn_coco.h5'
@@ -230,9 +234,14 @@ def train(dataset_dir, augment = False,
 
     model.train(dataset_train, dataset_val,
         learning_rate=config.LEARNING_RATE,
-        epochs = epochs,
+        epochs = 10,
         augmentation = augmentation,
-        custom_callbacks = [EarlyStop],
+        layers = 'heads')
+
+    model.train(dataset_train, dataset_val,
+        learning_rate=config.LEARNING_RATE,
+        epochs = 25,
+        augmentation = augmentation,
         layers = 'all')
 
 
