@@ -9,6 +9,7 @@ def getCallbacks(params):
          cp_params['name'],
          monitor = val_to_monitor,
          verbose = verbose,
+         mode = 'max',
          save_best_only = cp_params['save_best_only'],
          save_weights_only = cp_params['save_weights_only'],
          period = cp_params['period'])

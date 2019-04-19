@@ -3,6 +3,7 @@ import sys
 import glob
 import tqdm
 import skimage.color
+from keras.preprocessing.image import ImageDataGenerator
 
 ROOT_DIR = os.path.abspath('../../')
 sys.path.append(ROOT_DIR)
@@ -32,9 +33,9 @@ DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
 DEFAULT_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'mask_rcnn')
 
 class FBSConfig(Config):
-    NAME = 'FBS_RESNET50_TF_NOMINIMASK_'
+    NAME = 'FBM_RESNET50_tf_1ch_ratio_56_'
 
-    IMAGES_PER_GPU = 4
+    IMAGES_PER_GPU = 2
 
     NUM_CLASSES = 1 + 1 # background + brain
 
@@ -43,22 +44,11 @@ class FBSConfig(Config):
 
     BACKBONE = 'resnet50'
 
+    IMAGE_CHANNEL_COUNT = 1
+
     RPN_ANCHOR_SCALES = (16, 32, 64, 128)
 
-    # ROIs kept after non-maximum supression (training and inference)
-    POST_NMS_ROIS_TRAINING = 1000
-    POST_NMS_ROIS_INFERENCE = 2000
-
-    # ROIs kept after non-maximum supression (training and inference)
-    POST_NMS_ROIS_TRAINING = 1000
-    POST_NMS_ROIS_INFERENCE = 2000
-
-    # Non-max suppression threshold to filter RPN proposals.
-    # You can increase this during training to generate more propsals.
-    RPN_NMS_THRESHOLD = 0.7
-
-    # How many anchors per image to use for RPN training
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 64
+    RPN_ANCHOR_RATIOS = [0.75, 1, 1.5]
 
     # Dont exclude based on confidence, since we have two classes
     # then 0.5 is the minimum anyway as it picks between brain and BG
@@ -66,25 +56,31 @@ class FBSConfig(Config):
 
     USE_MINI_MASK = False
 
+    MASK_SHAPE = [56,56]
+
+    IMAGE_SHAPE = [256,256,1]
+
     IMAGE_MIN_DIM = 256
     IMAGE_MAX_DIM = 256
     IMAGE_RESIZE_MODE = "square"
 
-    MEAN_PIXEL = np.array([73.99, 73.99, 73.99])
-    TRAIN_BN = None
+    # one channel
+    MEAN_PIXEL = np.array([73.99])
 
-    # Number of ROIs per image to feed to classifier/mask heads
-    # The Mask RCNN paper uses 512 but often the RPN doesn't generate
-    # enough positive proposals to fill this and keep a positive:negative
-    # ratio of 1:3. You can increase the number of proposals by adjusting
-    # the RPN NMS threshold.
-    TRAIN_ROIS_PER_IMAGE = 100
+    TRAIN_BN = False
 
     # Maximum number of ground truth instances to use in one image
     MAX_GT_INSTANCES = 1
 
     # Max number of final detections per image
     DETECTION_MAX_INSTANCES = 1
+
+    LOSS_WEIGHTS = {
+            "rpn_class_loss": 0.1,
+            "rpn_bbox_loss": 1.,
+            "mrcnn_class_loss": 0.1,
+            "mrcnn_bbox_loss": 1.,
+            "mrcnn_mask_loss": 1. }
 
 class FBSInferenceConfig(FBSConfig):
     # Set batch size to 1 to run one image at a time
@@ -100,6 +96,7 @@ class FBSDataset(utils.Dataset):
     Reads the dataset images and masks, and prepares them
     for the model
     """
+
     # values must be between 0 and 255
     def __normalize0_255(self, img_slice):
         # Intensity normalization
@@ -122,13 +119,14 @@ class FBSDataset(utils.Dataset):
 
         return new_img
 
-    def load_data(self, dataset_dir, subset='train'):
+    def load_data(self, dataset_dir, subset='train', image_file=None, mask_file=None):
 
-        if subset is not 'train' and subset is not 'validate':
-            print('Subset must be train or validate')
+        if subset not in ['train', 'validate', 'eval']:
+            print('Subset must be train, validate or eval')
             return -1
 
         images_dir, masks_dir = None, None
+        is_eval = False
 
         if subset is 'train':
             images_dir = os.path.join(dataset_dir, 'train/images/*')
@@ -138,12 +136,17 @@ class FBSDataset(utils.Dataset):
             images_dir = os.path.join(dataset_dir, 'test/images/*')
             masks_dir = os.path.join(dataset_dir, 'test/masks/*')
 
+        elif subset is 'eval':
+            images_dir = os.path.join(dataset_dir, image_file)
+            masks_dir = os.path.join(dataset_dir, mask_file)
+            is_eval = True
+
         self.add_class('MRI', 1, 'brain')
 
         image_glob = sorted(glob.glob(images_dir))
         mask_glob = sorted(glob.glob(masks_dir))
         img_id = 0
-        for i in tqdm.trange(len(image_glob), desc='loading data'):
+        for i in tqdm.trange(len(image_glob), desc='loading data', disable=is_eval):
             img_path = image_glob[i]
             mask_path = mask_glob[i]
 
@@ -162,17 +165,25 @@ class FBSDataset(utils.Dataset):
 
                 # Normalize image so its between 0-255
                 new_img = self.__normalize0_255(img)
-                new_img = skimage.color.gray2rgb(new_img)
 
-                # img = new_img[..., np.newaxis]
+                #only one channel
+                # new_img = skimage.color.gray2rgb(new_img)
+                # new_img = new_img[..., np.newaxis]
+                # new_img = np.expand_dims(new_img, axis=0)
+                # train_datagen = ImageDataGenerator(rescale=1./255)
+                # new_img = train_datagen.flow(new_img, batch_size=1)[0]
+                # new_img = np.squeeze(new_img)
+
                 mask = mask[..., np.newaxis]
-
+                new_img = new_img[..., np.newaxis]
                 mask = np.array(mask, dtype=np.uint16) * 255
                 new_img = np.array(new_img, dtype=np.uint16)
 
                 self.add_image('MRI',
                         image=new_img,
+                        shape=new_img.shape,
                         mask=mask,
+                        mask_shape=mask.shape,
                         image_id=img_id,
                         path=img_path,
                         mask_path=mask_path,
@@ -198,7 +209,7 @@ def train(dataset_dir, augment = False,
     """Train the model"""
 
     config = FBSConfig()
-
+    config.display()
     dataset_train = FBSDataset()
     dataset_train.load_data(dataset_dir, subset='train')
     dataset_train.prepare()
@@ -214,9 +225,7 @@ def train(dataset_dir, augment = False,
             iaa.Flipud(0.5),
             iaa.OneOf([iaa.Affine(rotate=90),
                 iaa.Affine(rotate=180),
-                iaa.Affine(rotate=270)]),
-            iaa.Multiply((0.8, 1.5)),
-            iaa.GaussianBlur(sigma=(0.0, 2.0))])
+                iaa.Affine(rotate=270)])])
 
     model = modellib.MaskRCNN(mode='training', config=config,
             model_dir=DEFAULT_MODEL_DIR)
@@ -224,24 +233,24 @@ def train(dataset_dir, augment = False,
     params = getParams('Mask_RCNN')
     epochs = params['epochs']
 
-    #TODO remove useless callbacks
-
     if pretrained_coco:
         COCO_MODEL_PATH = 'mask_rcnn_coco.h5'
         model.load_weights(COCO_MODEL_PATH, by_name=True,
-                exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                exclude=["conv1", "mrcnn_class_logits", "mrcnn_bbox_fc",
                     "mrcnn_bbox", "mrcnn_mask"])
 
-    model.train(dataset_train, dataset_val,
-        learning_rate=config.LEARNING_RATE,
-        epochs = 10,
-        augmentation = augmentation,
-        layers = 'heads')
+
+    # model_path = model.find_last()
+
+    # # Load trained weights
+    # print("Loading weights from ", model_path)
+    # model.load_weights(model_path, by_name=True)
 
     model.train(dataset_train, dataset_val,
         learning_rate=config.LEARNING_RATE,
-        epochs = 25,
+        epochs = 70,
         augmentation = augmentation,
+        save_best_only = True,
+        monitored_quantity = 'val_mrcnn_mask_loss',
         layers = 'all')
-
 

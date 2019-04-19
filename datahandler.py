@@ -1,6 +1,7 @@
 import os
 import glob
 import tqdm
+import cv2
 
 import numpy as np
 import nibabel as nib
@@ -42,54 +43,79 @@ class DataHandler:
     # Receives array of file names and
     # corresponding index
     # returns image instance
-    def __getImage(self, glob_name, i):
-        img = nib.load(glob_name[i])
+    def __getImage(self, glob_name):
+        img = nib.load(glob_name)
         return img.get_fdata()
 
     # receives directories for both
     # directories containing images and masks
     # returns a tuple with two arrays for
     # all images and masks
-    def __getImages(self, images_dir, masks_dir,
-            desc = 'Data aquisition'):
+    def __getImages(self, images_dir=None, masks_dir=None,
+            desc='Data aquisition', image_names=None,
+            mask_names=None, from_names=False):
+
         images, masks = [], []
 
         #sorted as to insure img/msk match
-        glob_images = sorted(glob.glob(images_dir))
-        glob_masks = sorted(glob.glob(masks_dir))
 
-        for glob_i in tqdm.trange(len(glob_images),
+        if not from_names:
+            image_names = sorted(glob.glob(images_dir))
+            mask_names = sorted(glob.glob(masks_dir))
+
+        for file_i in tqdm.trange(len(image_names),
                 ncols = 80, desc = desc):
 
+            img_name = image_names[file_i]
+            mask_name = mask_names[file_i]
             # get all slices of nifti image
-            img_slices = self.__getImage(glob_images, glob_i)
-            mask_slices = self.__getImage(glob_masks, glob_i)
-
+            img_slices = self.__getImage(img_name)
+            mask_slices = self.__getImage(mask_name)
             # itirate through each slice
-            # TODO limit range of values between 0-1
             for i in range(img_slices.shape[-1]):
                 img = np.array(img_slices[:,:,i])
                 mask = np.array(mask_slices[:,:,i])
 
-                # skip images that are not 256x256
-                # TODO Resize them
                 if img.shape[0] != 256 or img.shape[1] != 256:
-                    break
+                    img = cv2.resize(img, dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
+                    mask = cv2.resize(mask, dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
 
                 # Normalize image so its between 0-255
                 new_img = self.__normalize0_255(img)
 
                 # add new channel axis to img and mask
                 img = new_img[..., np.newaxis]
+                mask[mask > 1] = 1
+                mask[mask < 1] = 0
                 mask = mask[..., np.newaxis]
-
                 images.append(img)
-                masks.append(mask)
-
+                masks.append(mask * 255)
         images = np.array(images, dtype=np.uint16)
         masks = np.array(masks, dtype=np.uint16)
+        return (images, masks)
 
-        return (images, masks * 255)
+    def getFilesFromIndices(self, files, indices):
+        return np.take(files, indices)
+
+    def getKFoldData(self, image_files, mask_files, indices, eval=False):
+        
+        if not eval:
+            image_train_files = self.getFilesFromIndices(image_files, indices['train'])
+            mask_train_files = self.getFilesFromIndices(mask_files, indices['train'])
+            
+            tr_images, tr_masks = self.__getImages(image_names = image_train_files,
+                    mask_names = mask_train_files, from_names=True)
+
+        image_val_files = self.getFilesFromIndices(image_files, indices['val'])
+        mask_val_files = self.getFilesFromIndices(mask_files, indices['val'])
+
+        val_images, val_masks = self.__getImages(image_names = image_val_files,
+                mask_names = mask_val_files, from_names=True)
+        
+        if eval:
+            return val_images, val_masks
+        
+        return tr_images, tr_masks, val_images, val_masks
 
     # return tuple containing training data
     def getTrainData(self):
@@ -104,13 +130,19 @@ class DataHandler:
                 desc = 'Validation data')
 
     #return image data
-    def getImageData(self, fname):
+    def getImageData(self, fname, is_mask=False):
         # get image data and header, must use med.py
         # for internal process of getting header info
         data, hdr = load(fname)
 
         # switch axis
         data = np.moveaxis(data, -1, 0)
+
+        if is_mask:
+            data = np.array(data, dtype=np.uint16)
+            data = data[..., np.newaxis]
+            return data, hdr
+
         norm_data = []
 
         # normalize each slice
@@ -119,7 +151,7 @@ class DataHandler:
             norm_data.append(self.__normalize0_255(img_slice))
 
         #change to numpy array and add axis
-        norm_data = np.array(norm_data, dtype=np.uint16)
+        data = np.array(norm_data, dtype=np.uint16)
         data = data[..., np.newaxis]
         return data, hdr
 

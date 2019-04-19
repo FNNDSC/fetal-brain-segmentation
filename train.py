@@ -37,12 +37,6 @@ resetSeed()
 dh = DataHandler()
 tr_images, tr_masks, te_images, te_masks = dh.getData()
 
-# TODO remove this
-# save_path = './data/as_read/'
-# for i, img in enumerate(tqdm(tr_images, desc='Saving Imgs')):
-#     io.imsave(os.path.join(save_path,"%d_img.png"%i), np.squeeze(img))
-#     io.imsave(os.path.join(save_path,"%d_msk.png"%i), np.squeeze(tr_masks[i]))
-
 train_generator = getGenerator(tr_images, tr_masks,
         augmentation = False, batch_size=batch_size)
         #params['train_augmantation'], batch_size=batch_size)

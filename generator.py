@@ -10,10 +10,9 @@ def getGenerator(images, masks, augmentation = False, batch_size=32):
 
     if augmentation:
         data_gen_args = dict(rescale=1./255,
-            rotation_range=60,
-            width_shift_range=0.1,
-            height_shift_range=0.1,
-            zoom_range=0.2)
+            horizontal_flip = True,
+            vertical_flip = True,
+            rotation_range = 90)
     else:
         data_gen_args = dict(rescale=1./255)
 

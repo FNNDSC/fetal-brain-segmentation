@@ -1,24 +1,24 @@
 import os
 
-def getParams(exp_name):
+def getParams(exp_name, unet_type='unet'):
     # General Training
-    epochs = 100
+    epochs = 25
     batch_size = 16
-    monitor = 'val_loss'
+    monitor = 'val_dice_coef'
     verbose = 1
     train_augmantation = True
 
     # File names
     # cp_name = './weights/%s_weights.h5'%exp_name
     # log_name = './logs/%s_log.csv'%exp_name
-    log_dir_name = './logs/unet/%s'%exp_name
+    log_dir_name = './logs/%s/kfold_%s/%s'%(unet_type,unet_type, exp_name)
 
     if not os.path.exists(log_dir_name):
         os.makedirs(log_dir_name)
 
     cp_name = os.path.join(log_dir_name, '%s_weights.h5'%exp_name)
     log_name = os.path.join(log_dir_name, '%s_log.csv'%exp_name)
-    json_name = os.path.joing(log_dir_name, '%s_model.json'%exp_name)
+    json_name = os.path.join(log_dir_name, '%s_model.json'%exp_name)
 
     #Checkpoint
     save_best_only = True
@@ -31,8 +31,8 @@ def getParams(exp_name):
     restore_best_weights = True
 
     #Reduce LR
-    factor = 0.2
-    lr_patience = 4
+    factor = 0.1
+    lr_patience = 10
     min_lr = 0.000001
 
     #Logger
