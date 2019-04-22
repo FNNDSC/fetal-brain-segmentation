@@ -17,7 +17,6 @@ class FBSConfig(Config):
 
     RPN_ANCHOR_RATIOS = [0.75, 1, 1.5]
 
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 64
     # Dont exclude based on confidence, since we have two classes
     # then 0.5 is the minimum anyway as it picks between brain and BG
     DETECTION_MIN_CONFIDENCE = 0
@@ -29,7 +28,7 @@ class FBSConfig(Config):
     IMAGE_MAX_DIM = 256
 
     IMAGE_SHAPE = [256,256,1]
-
+    MASK_SHAPE = [56,56]
 
     # one channel
     MEAN_PIXEL = np.array([73.99])
@@ -56,7 +55,8 @@ class TrainFBSConfig(FBSConfig):
             img_per_gpu=2,
             train_steps=1000,
             val_steps=50,
-            epochs=70):
+            epochs=25,
+            n_folds=10):
 
 
         if da:
@@ -67,7 +67,7 @@ class TrainFBSConfig(FBSConfig):
             base_name += '_wl'
         base_name += '_%d'%epochs
         base_name += '_%d'%mask_dim
-        base_name += '_5K_%d_'%kfold_i
+        base_name += '_%dK_%d_'%(n_folds, kfold_i)
 
         self.TRAIN_ROIS_PER_IMAGE = 100
         self.NAME = base_name
@@ -84,7 +84,7 @@ class TrainFBSConfig(FBSConfig):
                     "rpn_bbox_loss": 1.,
                     "mrcnn_class_loss": .1,
                     "mrcnn_bbox_loss": 1.,
-                    "mrcnn_mask_loss": 1. }
+                    "mrcnn_mask_loss": 2. }
 
         super(FBSConfig, self).__init__()
 class InferenceFBSConfig(TrainFBSConfig):

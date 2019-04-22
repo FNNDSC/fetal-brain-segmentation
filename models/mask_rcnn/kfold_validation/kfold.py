@@ -14,7 +14,8 @@ sys.path.append(ROOT_DIR)
 
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
 DEFAULT_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'mask_rcnn/kfold')
-epochs = 50
+epochs = 25
+n_folds = 10
 
 def getDatasets(train_indices, val_indices):
     image_train_files = np.take(image_files, train_indices)
@@ -70,7 +71,7 @@ def train(trainConfig, train_dataset, val_dataset, augment = True, pretrained_co
 
 image_files, mask_files = load_data_files('data/kfold_data/')
 
-skf = getKFolds(image_files, mask_files, n=5)
+skf = getKFolds(image_files, mask_files, n=n_folds)
 
 kfold_indices = []
 for train_index, test_index in skf.split(image_files, mask_files):
@@ -82,14 +83,13 @@ for i in range(len(kfold_indices)):
 
     configParams = {'da': False, 'mask_dim': 56, 'wl': True, 'tl': True, 'kfold_i': i,
             'img_per_gpu': 4, 'train_steps': len_dataset_train,
-            'val_steps': len_dataset_val, 'epochs': epochs}
+            'val_steps': len_dataset_val, 'epochs': epochs, 'n_folds': n_folds}
 
     trainFBSConfig = TrainFBSConfig(**configParams)
     trainFBSConfig.display()
 
-    train(trainFBSConfig, dataset_train, dataset_val)
-    # inferenceFBSConfig = InferenceFBSConfig(configParams)
-    # inferenceFBSConfig.display()
+    train(trainFBSConfig, dataset_train, dataset_val,
+            augment=configParams['da'], pretrained_coco=configParams['tl'])
 
 
 

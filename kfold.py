@@ -49,9 +49,9 @@ for i in range(len(kfold_indices)):
 
     #Get model and add weights
     if unet_type == 'unet':
-        model = getSEUnet()
+        model = getUnet()
     else:
-        model = getUneti()
+        model = getSEUnet()
 
     model_json = model.to_json()
     with open(params['model_name'], "w") as json_file:
