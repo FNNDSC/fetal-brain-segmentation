@@ -1,5 +1,6 @@
 from datahandler import DataHandler
 from models.unet_se import *
+from models.unet import *
 from generator import *
 from params import *
 from callbacks import getCallbacks
@@ -49,9 +50,9 @@ for i in range(len(kfold_indices)):
 
     #Get model and add weights
     if unet_type == 'unet':
-        model = getSEUnet()
+        model = getUnet()
     else:
-        model = getUneti()
+        model = getSEUnet()
 
     model_json = model.to_json()
     with open(params['model_name'], "w") as json_file:
