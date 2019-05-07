@@ -134,7 +134,7 @@ class DataHandler:
         # get image data and header, must use med.py
         # for internal process of getting header info
         data, hdr = load(fname)
-
+        
         # switch axis
         data = np.moveaxis(data, -1, 0)
 

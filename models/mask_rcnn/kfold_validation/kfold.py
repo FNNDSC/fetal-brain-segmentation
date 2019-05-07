@@ -64,8 +64,8 @@ def train(trainConfig, train_dataset, val_dataset, augment = True, pretrained_co
             learning_rate=trainConfig.LEARNING_RATE,
             epochs = epochs,
             augmentation = augmentation,
-            save_best_only = True,
-            monitored_quantity = 'val_mrcnn_mask_loss',
+            #save_best_only = True,
+            #monitored_quantity = 'val_mrcnn_mask_loss',
             layers = 'all')
 
 
@@ -81,7 +81,7 @@ for i in range(len(kfold_indices)):
     dataset_train, len_dataset_train, dataset_val, len_dataset_val = getDatasets(
             kfold_indices[i]['train'], kfold_indices[i]['val'])
 
-    configParams = {'da': False, 'mask_dim': 56, 'wl': True, 'tl': True, 'kfold_i': i,
+    configParams = {'da': False, 'mask_dim': 56, 'wl': True, 'tl': False, 'kfold_i': i,
             'img_per_gpu': 4, 'train_steps': len_dataset_train,
             'val_steps': len_dataset_val, 'epochs': epochs, 'n_folds': n_folds}
 

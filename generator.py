@@ -3,6 +3,14 @@ from keras.preprocessing.image import ImageDataGenerator
 
 def resetSeed():
     np.random.seed(1)
+    
+def getGeneratorBCLSTM(images, masks, augmentation = False, batch_size=32):
+    resetSeed()
+    seed = 1
+
+    print(images.shape)
+
+
 
 def getGenerator(images, masks, augmentation = False, batch_size=32):
     resetSeed()

@@ -76,8 +76,9 @@ class TrainFBSConfig(FBSConfig):
         self.STEPS_PER_EPOCH = math.ceil(train_steps / img_per_gpu)
         self.VALIDATION_STEPS = math.ceil(val_steps / img_per_gpu)
 
-        self.MASK_SHAPE = [mask_dim, mask_dim]
-
+        self.MASK_SHAPE = [14, 14]
+        self.POOL_SIZE = 14
+        self.MASK_POOL_SIZE = 14
         if wl:
             self.LOSS_WEIGHTS = {
                     "rpn_class_loss": .1,
@@ -87,6 +88,7 @@ class TrainFBSConfig(FBSConfig):
                     "mrcnn_mask_loss": 2. }
 
         super(FBSConfig, self).__init__()
+
 class InferenceFBSConfig(TrainFBSConfig):
     def __init__(self, **args):
         super(InferenceFBSConfig, self).__init__(**args)

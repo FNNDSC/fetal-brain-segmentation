@@ -25,7 +25,7 @@ for train_index, val_index in skf.split(image_files, mask_files):
     kfold_indices.append({'train': train_index, 'val': val_index})
 
 
-unet_type = 'unet'
+unet_type = 'unet_se_'
 #Get data and generators
 dh = DataHandler()
 for i in range(len(kfold_indices)):
