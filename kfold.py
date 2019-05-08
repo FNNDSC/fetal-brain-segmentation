@@ -1,6 +1,9 @@
 from datahandler import DataHandler
 from models.unet_se import *
 from models.unet import *
+from models.resnet_fcn import *
+from models.resnet_se_fcn import *
+
 from generator import *
 from params import *
 from callbacks import getCallbacks
@@ -25,15 +28,15 @@ for train_index, val_index in skf.split(image_files, mask_files):
     kfold_indices.append({'train': train_index, 'val': val_index})
 
 
-unet_type = 'unet_se_'
+model_type = 'resnetFCN'
 #Get data and generators
 dh = DataHandler()
 for i in range(len(kfold_indices)):
 
-    exp_name = 'kfold_%s_dice_DA_K%d'%(unet_type, i)
+    exp_name = 'kfold_%s_dice_DA_K%d'%(model_type, i)
 
     #get parameters
-    params = getParams(exp_name, unet_type)
+    params = getParams(exp_name, model_type)
 
     #set common variables
     epochs = params['epochs']
@@ -49,8 +52,12 @@ for i in range(len(kfold_indices)):
             augmentation = False, batch_size=batch_size)
 
     #Get model and add weights
-    if unet_type == 'unet':
+    if model_type == 'unet':
         model = getUnet()
+    if model_type == 'resnetFCN':
+        model = getResnet50FCN()
+    if model_type == 'resnetSEFCN':
+        model = getResnetSE50FCN()
     else:
         model = getSEUnet()
 

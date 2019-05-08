@@ -3,6 +3,7 @@
 *.json
 data/**/*
 logs/**/*
+backup_logs/**/*
 weights/**/*
 Pipfile*
 json_models/**/*

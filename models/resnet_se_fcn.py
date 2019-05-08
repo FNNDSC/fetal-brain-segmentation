@@ -1,5 +1,12 @@
+from losses import *
+from keras.optimizers import Adam
+from keras.losses import binary_crossentropy
+
 from keras import layers
 from keras.models import Model
+
+from keras import backend as K
+import tensorflow as tf
 
 def squeeze_excite_block(input, ratio=16):
     init = input
@@ -20,7 +27,7 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
     """The identity block is the block that has no conv layer at shortcut"""
     filters1, filters2, filters3 = filters
     bn_axis = 3
-    
+
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'
 
@@ -80,7 +87,7 @@ def conv_block(input_tensor,
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
     x = squeeze_excite_block(x)
-    
+
     shortcut = layers.Conv2D(filters3, (1, 1), strides=strides,
                              kernel_initializer='he_normal',
                              name=conv_name_base + '1')(input_tensor)
@@ -95,6 +102,11 @@ def conv_block(input_tensor,
 def ResNet50():
     """Instantiates the ResNet50 architecture.
     """
+
+    tf.reset_default_graph()
+    sess = tf.Session()
+    K.clear_session()
+
     bn_axis = 3
     img_input = layers.Input(shape=(256,256,1))
 
@@ -134,45 +146,52 @@ def ResNet50():
 
     return model
 
-base_model = ResNet50()
+def getResnetSE50FCN():
+    base_model = ResNet50()
 
-# add classifier
-# load ResNet
-n_classes = 1
-stride = 32
+    # add classifier
+    # load ResNet
+    n_classes = 1
+    stride = 32
 
-x = base_model.get_layer('activation_49').output
-x = layers.Dropout(0.5)(x)
+    x = base_model.get_layer('activation_49').output
+    x = layers.Dropout(0.5)(x)
 
-x = layers.Convolution2D(n_classes,1,1,name = 'pred_32',init='zero',border_mode = 'valid')(x)
+    x = layers.Conv2D(n_classes,1,name = 'pred_32', padding = 'valid', kernel_initializer = 'he_normal')(x)
 
-# add 32s upsampler
+    # add 32s upsampler
 
-x = layers.UpSampling2D(size=(stride), interpolation='bilinear')(x)
-x = layers.Activation('sigmoid')(x)
-pred_32s = x
+    x = layers.UpSampling2D(size=(stride), interpolation='bilinear')(x)
+    x = layers.Activation('sigmoid')(x)
+    pred_32s = x
 
-# 16s
-x = base_model.get_layer('activation_40').output
-x = layers.Dropout(0.5)(x)
-x = layers.Convolution2D(n_classes,1,1,name = 'pred_16',init='zero',border_mode = 'valid')(x)
-x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
-x = layers.Convolution2D(n_classes,5,5,name = 'pred_up_16',init='zero',border_mode = 'same')(x)
+    # 16s
+    x = base_model.get_layer('activation_40').output
+    x = layers.Dropout(0.5)(x)
+    x = layers.Conv2D(n_classes,1,name = 'pred_16', padding = 'valid', kernel_initializer = 'he_normal')(x)
+    x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
+    x = layers.Conv2D(n_classes,3,name = 'pred_up_16', padding = 'same', kernel_initializer = 'he_normal')(x)
 
-# merge classifiers
-x = layers.add([x, pred_32s])
-x = layers.Activation('sigmoid')(x)
-pred_16s = x
+    # merge classifiers
+    x = layers.add([x, pred_32s])
+    x = layers.Activation('sigmoid')(x)
+    pred_16s = x
 
-x = base_model.get_layer('activation_22').output
-x = layers.Dropout(0.5)(x)
-x = layers.Convolution2D(n_classes,1,1,name = 'pred_8',init='zero',border_mode = 'valid')(x)
-x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
-x = layers.Convolution2D(n_classes,5,5,name = 'pred_up_8',init='zero',border_mode = 'same')(x)
+    x = base_model.get_layer('activation_22').output
+    x = layers.Dropout(0.5)(x)
+    x = layers.Conv2D(n_classes,1,name = 'pred_8', padding = 'valid', kernel_initializer = 'he_normal')(x)
+    x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
+    x = layers.Conv2D(n_classes,3,name = 'pred_up_8', padding = 'same', kernel_initializer = 'he_normal')(x)
 
-# merge classifiers
-x = layers.add([x, pred_16s])
-x = layers.Activation('sigmoid')(x)
+    # merge classifiers
+    x = layers.add([x, pred_16s])
+    x = layers.Activation('sigmoid')(x)
 
-model = Model(input=base_model.input,output=x)
-print(model.summary())
+    model = Model(input=base_model.input,output=x)
+
+    model.compile(optimizer = Adam(lr = 1e-4),
+                loss = binary_crossentropy,
+                metrics = [dice_coef])
+
+    #print(model.summary())
+    return model

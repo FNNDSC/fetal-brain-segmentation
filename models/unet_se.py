@@ -26,7 +26,7 @@ def squeeze_excite_block(input, ratio=16):
     x = multiply([init, se])
     return x
 
-def getUnet():
+def getSEUnet():
 
     tf.reset_default_graph()
     sess = tf.Session()
@@ -68,25 +68,25 @@ def getUnet():
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
     se6 = squeeze_excite_block(conv6)
-    
+
     up7 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se6))
     merge7 = concatenate([conv3,up7], axis = 3)
     conv7 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     conv7 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
     se7 = squeeze_excite_block(conv7)
-    
+
     up8 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se7))
     merge8 = concatenate([conv2,up8], axis = 3)
     conv8 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
     se8 = squeeze_excite_block(conv8)
-    
+
     up9 = Conv2D(32, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se8))
     merge9 = concatenate([conv1,up9], axis = 3)
     conv9 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
     conv9 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
     se9 = squeeze_excite_block(conv9)
-    
+
     conv10 = Conv2D(1, 1, activation = 'sigmoid')(se9)
 
     model = Model(input = inputs, output = conv10)
