@@ -156,11 +156,9 @@ def getResnetSE50FCN():
 
     x = base_model.get_layer('activation_49').output
     x = layers.Dropout(0.5)(x)
-
     x = layers.Conv2D(n_classes,1,name = 'pred_32', padding = 'valid', kernel_initializer = 'he_normal')(x)
 
     # add 32s upsampler
-
     x = layers.UpSampling2D(size=(stride), interpolation='bilinear')(x)
     x = layers.Activation('sigmoid')(x)
     pred_32s = x
@@ -168,6 +166,7 @@ def getResnetSE50FCN():
     # 16s
     x = base_model.get_layer('activation_40').output
     x = layers.Dropout(0.5)(x)
+    x = squeeze_excite_block(x)
     x = layers.Conv2D(n_classes,1,name = 'pred_16', padding = 'valid', kernel_initializer = 'he_normal')(x)
     x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
     x = layers.Conv2D(n_classes,3,name = 'pred_up_16', padding = 'same', kernel_initializer = 'he_normal')(x)
@@ -177,8 +176,10 @@ def getResnetSE50FCN():
     x = layers.Activation('sigmoid')(x)
     pred_16s = x
 
+    # 32s
     x = base_model.get_layer('activation_22').output
     x = layers.Dropout(0.5)(x)
+    x = squeeze_excite_block(x)
     x = layers.Conv2D(n_classes,1,name = 'pred_8', padding = 'valid', kernel_initializer = 'he_normal')(x)
     x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
     x = layers.Conv2D(n_classes,3,name = 'pred_up_8', padding = 'same', kernel_initializer = 'he_normal')(x)

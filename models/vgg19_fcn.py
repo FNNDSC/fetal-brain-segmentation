@@ -1,9 +1,19 @@
 from keras import layers
-
 from keras.applications.vgg19 import VGG19
 from keras.models import Model
+from keras.optimizers import Adam
+from keras import backend as K
+from keras.losses import binary_crossentropy
+import tensorflow as tf
+
+#from losses import *
 
 def getVGG19FCN():
+
+	tf.reset_default_graph()
+	sess = tf.Session()
+	K.clear_session()
+
 	# load ResNet
 	n_classes = 1
 	stride = 32
@@ -46,6 +56,8 @@ def getVGG19FCN():
 	x = layers.Activation('sigmoid')(x)
 
 	model = Model(input=base_model.input,output=x)
-	print(model.summary())
+	model.compile(optimizer = Adam(lr = 1e-4),
+            loss = binary_crossentropy,
+            metrics = [dice_coef])
 
 	return model
