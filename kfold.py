@@ -28,7 +28,7 @@ for train_index, val_index in skf.split(image_files, mask_files):
     kfold_indices.append({'train': train_index, 'val': val_index})
 
 
-model_type = 'resnetFCN'
+model_type = 'unet_se'
 #Get data and generators
 dh = DataHandler()
 for i in range(len(kfold_indices)):
