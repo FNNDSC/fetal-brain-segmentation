@@ -49,10 +49,11 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
                       name=conv_name_base + '2c')(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
-    x = squeeze_excite_block(x)
-
     x = layers.add([x, input_tensor])
     x = layers.Activation('relu')(x)
+
+    x = squeeze_excite_block(x)
+
     return x
 
 
@@ -86,7 +87,6 @@ def conv_block(input_tensor,
                       name=conv_name_base + '2c')(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
-    x = squeeze_excite_block(x)
 
     shortcut = layers.Conv2D(filters3, (1, 1), strides=strides,
                              kernel_initializer='he_normal',
@@ -96,6 +96,9 @@ def conv_block(input_tensor,
 
     x = layers.add([x, shortcut])
     x = layers.Activation('relu')(x)
+
+    x = squeeze_excite_block(x)
+
     return x
 
 
@@ -167,6 +170,7 @@ def getResnetSE50FCN():
     x = base_model.get_layer('activation_40').output
     x = layers.Dropout(0.5)(x)
     x = squeeze_excite_block(x)
+    
     x = layers.Conv2D(n_classes,1,name = 'pred_16', padding = 'valid', kernel_initializer = 'he_normal')(x)
     x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
     x = layers.Conv2D(n_classes,3,name = 'pred_up_16', padding = 'same', kernel_initializer = 'he_normal')(x)

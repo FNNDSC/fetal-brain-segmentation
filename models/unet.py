@@ -1,5 +1,5 @@
 import numpy as np
-from losses import *
+#from losses import *
 import keras
 from keras.models import *
 from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, UpSampling2D, concatenate
@@ -67,8 +67,11 @@ def getUnet():
 
     model = Model(input = inputs, output = conv10)
 
-    model.compile(optimizer = Adam(lr = 1e-4),
-            loss = binary_crossentropy,
-            metrics = [dice_coef])
+    '''model.compile(optimizer = Adam(lr = 1e-4),
+                        loss = binary_crossentropy,
+                        metrics = [dice_coef])'''
 
     return model
+
+m = getUnet()
+print(m.summary())
