@@ -24,7 +24,7 @@ def squeeze_excite_block(input, ratio=16):
 
 def VGG19SE():
     img_input = layers.Input(shape=(256,256,1))
-    
+
     x = layers.Conv2D(64, (3, 3),
                       activation='relu',
                       padding='same',
@@ -108,17 +108,20 @@ def VGG19SE():
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
     x = squeeze_excite_block(x)
 
-    
+    model = Model(input=img_input,output=x)
+
     return model
 
 def getVGG19SEFCN():
     base_model = VGG19SE()
 
+    n_classes = 1
+    stride = 32
     # add classifier
     x = base_model.get_layer('block5_pool').output
     x = layers.Dropout(0.5)(x)
 
-    x = layers.Conv2D(n_classes,1,name = 'pred_32',init='zero',padding = 'valid')(x)
+    x = layers.Conv2D(n_classes,1,name = 'pred_32',padding = 'valid', kernel_initializer='he_normal')(x)
 
     ## add 32s upsampler
 
@@ -129,9 +132,9 @@ def getVGG19SEFCN():
     # 16s
     x = base_model.get_layer('block5_conv4').output
     x = layers.Dropout(0.5)(x)
-    x = layers.Conv2D(n_classes,1,name = 'pred_16',init='zero',padding = 'valid')(x)
+    x = layers.Conv2D(n_classes,1,name = 'pred_16',padding = 'valid', kernel_initializer='he_normal')(x)
     x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
-    x = layers.Conv2D(n_classes,5,name = 'pred_up_16',init='zero',padding = 'same')(x)
+    x = layers.Conv2D(n_classes,5,name = 'pred_up_16',padding = 'same', kernel_initializer='he_normal')(x)
 
     # merge classifiers
     x = layers.add([x, pred_32s])
@@ -140,9 +143,9 @@ def getVGG19SEFCN():
 
     x = base_model.get_layer('block4_conv4').output
     x = layers.Dropout(0.5)(x)
-    x = layers.Conv2D(n_classes,1,name = 'pred_8',init='zero',padding = 'valid')(x)
+    x = layers.Conv2D(n_classes,1,name = 'pred_8',padding = 'valid', kernel_initializer='he_normal')(x)
     x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
-    x = layers.Conv2D(n_classes,5,name = 'pred_up_8',init='zero',padding = 'same')(x)
+    x = layers.Conv2D(n_classes,5,name = 'pred_up_8',padding = 'same', kernel_initializer='he_normal')(x)
 
     # merge classifiers
     x = layers.add([x, pred_16s])

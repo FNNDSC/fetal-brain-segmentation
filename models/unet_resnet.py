@@ -1,4 +1,4 @@
-#from losses import *
+from losses import *
 from keras.optimizers import Adam
 from keras.losses import binary_crossentropy
 
@@ -47,8 +47,6 @@ def identity_block_same(input_tensor, kernel_size, filters, stage, block):
                       kernel_initializer='he_normal',
                       name=conv_name_base + '2c', padding='same')(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
-
-    #x = squeeze_excite_block(x)
 
     x = layers.add([x, input_tensor])
     x = layers.Activation('relu')(x)
@@ -110,8 +108,6 @@ def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2),
                       name=conv_name_base + '2c')(x)
     x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
 
-    #x = squeeze_excite_block(x)
-
     shortcut = layers.Conv2D(filters3, (1, 1), strides=strides,
                              kernel_initializer='he_normal',
                              name=conv_name_base + '1')(input_tensor)
@@ -126,9 +122,9 @@ def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2),
 
     return x
 
-def up_conv_block(input_tensor, skip_target, kernel_size, filters, 
+def up_conv_block(input_tensor, skip_target, kernel_size, filters,
     stage, block, strides=(2, 2), se_version = False):
-    
+
     filters1, filters2, filters3 = filters
     bn_axis = 3
 
@@ -136,7 +132,7 @@ def up_conv_block(input_tensor, skip_target, kernel_size, filters,
     bn_name_base = 'bn' + str(stage) + block + '_branch'
 
     x = layers.UpSampling2D(size = (2,2))(input_tensor)
-    
+
     x = layers.Conv2D(filters1, (1, 1), strides=strides,
                       kernel_initializer='he_normal',
                       padding='same',
@@ -190,7 +186,7 @@ def UnetResNet18(se_version):
 
     if se_version:
         x = squeeze_excite_block(x)
-    
+
     x = conv_block(x, 3, [64, 64, 64], stage=2, block='a', strides=(1, 1), se_version=se_version)
     x = identity_block(x, 3, [64, 64, 64], stage=2, block='b', se_version=se_version)
     x2 = x
@@ -203,7 +199,7 @@ def UnetResNet18(se_version):
 
     x = conv_block(x, 3, [256, 256, 256], stage=4, block='a', se_version=se_version)
     x = identity_block(x, 3, [256, 256, 256], stage=4, block='b', se_version=se_version)
-    x4 = x 
+    x4 = x
 
     x = conv_block(x, 3, [512, 512, 512], stage=5, block='a', se_version=se_version)
     x = identity_block(x, 3, [512, 512, 512], stage=5, block='b', se_version=se_version)
@@ -233,7 +229,10 @@ def UnetResNet18(se_version):
 
 def getUnetResnet18(se_version=False):
     model = UnetResNet18(se_version)
-    print(model.summary())
+
+    model.compile(optimizer = Adam(lr = 1e-4),
+            loss = binary_crossentropy,
+            metrics = [dice_coef])
+
     return model
 
-getUnetResnet18(se_version=True)

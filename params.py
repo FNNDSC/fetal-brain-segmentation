@@ -1,6 +1,6 @@
 import os
 
-def getParams(exp_name, unet_type='unet'):
+def getParams(exp_name, unet_type='unet', is_lstm = False):
     # General Training
     epochs = 25
     batch_size = 16
@@ -11,7 +11,10 @@ def getParams(exp_name, unet_type='unet'):
     # File names
     # cp_name = './weights/%s_weights.h5'%exp_name
     # log_name = './logs/%s_log.csv'%exp_name
-    log_dir_name = './logs/%s/kfold_%s/%s'%(unet_type,unet_type, exp_name)
+    if is_lstm:
+        log_dir_name = './logs/%s_LSTM/kfold_%s_LSTM/%s'%(unet_type,unet_type, exp_name)
+    else:
+        log_dir_name = './logs/%s/kfold_%s/%s'%(unet_type,unet_type, exp_name)
 
     if not os.path.exists(log_dir_name):
         os.makedirs(log_dir_name)

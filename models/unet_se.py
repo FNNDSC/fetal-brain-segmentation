@@ -97,5 +97,3 @@ def getSEUnet():
 
     return model
 
-m = getSEUnet()
-print(m.summary())

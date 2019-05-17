@@ -2,10 +2,11 @@ from datahandler import DataHandler
 from models.unet_se import *
 from models.unet import *
 from models.resnet_fcn import *
-from models.resnet_se_fcn import *
+#from models.resnet_se_fcn import *
 from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
+from models.unet_resnet import *
 
 from generator import *
 from params import *
@@ -21,27 +22,36 @@ from keras import backend as K
 
 import argparse
 import sys
+import tensorflow as tf
 
 def getModel(name):
-    if model_type == 'unet':
+    print('Working with %s'%name)
+    if name == 'unet':
         model = getUnet()
-    elif model_type == 'resnetFCN':
-        model = getResnet50FCN()
-    elif model_type == 'resnetSEFCN':
-        model = getResnetSE50FCN()
-    elif model_type == 'vgg19FCN':
-        model = getVGG19FCN()
-    elif model_type == 'vgg19SEFCN':
-        model = getVGG19SEFCN()
-    else:
+    elif name == 'unet_se':
         model = getSEUnet()
+    elif name == 'resnetFCN':
+        model = getResnet50FCN()
+    elif name == 'resnetSEFCN':
+        model = getResnetSE50FCN()
+    elif name == 'vgg19FCN':
+        model = getVGG19FCN()
+    elif name == 'vgg19SEFCN':
+        model = getVGG19SEFCN()
+    elif name == 'unetResnet18':
+        model = getUnetResnet18()
+    elif name == 'unetResnet18SE':
+        model = getUnetResnet18(se_version = True)
+    else:
+        print('error')
+        return -1
 
     return model
 
-model_names = ['vgg19FCN', 'vgg19SEFCN', 'resnetFCN', 'resnetSEFCN']
+model_names = ['unetResnet18', 'unetResnet18SE']
 
 for model_type in model_names:
-    print('Working with %s'%model_type)
+
     image_files, mask_files = load_data_files('data/kfold_data/')
 
     skf = getKFolds(image_files, mask_files, n=10)
@@ -52,7 +62,9 @@ for model_type in model_names:
 
     #Get data and generators
     dh = DataHandler()
-    for i in range(len(kfold_indices)):
+    start = 0
+
+    for i in range(start, len(kfold_indices)):
 
         exp_name = 'kfold_%s_dice_DA_K%d'%(model_type, i)
 
