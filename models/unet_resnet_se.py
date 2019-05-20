@@ -1,6 +1,6 @@
 from losses import *
 from keras.models import Model
-from keras.layers import Input, Conv2D, Activation, BatchNormalization, Conv2DTranspose, MaxPooling2D, Dense, GlobalAveragePooling2D
+from keras.layers import Input, Conv2D, Activation, BatchNormalization, UpSampling2D, MaxPooling2D, Dense, GlobalAveragePooling2D
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.losses import binary_crossentropy
 from keras import backend as K
@@ -19,131 +19,106 @@ def bce_dice_loss(y_true, y_pred):
     return binary_crossentropy(y_true, y_pred) + (1 - dice_loss(y_true, y_pred))
 
 
-def dw_conv(init, nb_filter):
-    residual = Conv2D(nb_filter, (1, 1), strides=(2, 2), padding='same', activation='relu')(init)
-    residual = BN(residual)
+def down_conv(init, nb_filter):
+    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu', 
+        kernel_initializer = 'he_normal')(init)
+    x = BatchNormalization()(x)
+    x = squeeze_excite_block(x)
 
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu')(init)
-    x = BN(x)
-    # x = Activation('relu')(x)
-
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu')(x)
-    x = BN(x)
-    x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
-
-    x = layers.add([x, residual])
+    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
     return x
-
 
 def up_conv(init, skip, nb_filter):
-    x = Conv2DTranspose(nb_filter, (3, 3), padding='same', strides=(2, 2))(init)
-    x = BN(x)
-    x = layers.add([x, skip])
+    x = UpSampling2D(size = (2,2))(init)
+    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu', 
+        kernel_initializer = 'he_normal')(x)
+    x = BatchNormalization()(x)
+    x = squeeze_excite_block(x)
+
+    x = layers.concatenate([x, skip], axis=3)
     return x
-
-
-def BN(x):
-    return BatchNormalization()(x)
-
 
 def res_block(init, nb_filter):
-    x = Activation('relu')(init)
+    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
+        kernel_initializer = 'he_normal')(init)
+    x = BatchNormalization()(x)
 
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu')(x)
-    x = BN(x)
-    # x = Activation('relu')(x)
+    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
+        kernel_initializer = 'he_normal')(x)
+    x = BatchNormalization()(x)
 
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu')(x)
-    x = BN(x)
+    x = squeeze_excite_block(x)
 
-    x = Squeeze_excitation_layer(x)
-
-    x = layers.add([init, x])
+    x = layers.concatenate([init, x], axis=3)
     return x
 
+def squeeze_excite_block(input, ratio=16):
+    init = input
+    channel_axis = -1
+    filters = init._keras_shape[channel_axis]
+    se_shape = (1, 1, filters)
 
-def Squeeze_excitation_layer(input_x):
-    ratio = 16
-    out_dim =  int(np.shape(input_x)[-1])
-    squeeze = GlobalAveragePooling2D()(input_x)
-    excitation = Dense(units=int(out_dim / ratio))(squeeze)
-    excitation = Activation('relu')(excitation)
-    excitation = Dense(units=out_dim)(excitation)
-    excitation = Activation('sigmoid')(excitation)
-    excitation = layers.Reshape([-1,1,out_dim])(excitation)
-    scale = layers.multiply([input_x, excitation])
+    se = layers.GlobalAveragePooling2D()(init)
+    se = layers.Reshape(se_shape)(se)
+    se = layers.Dense(filters // ratio, activation='relu')(se)
+    se = layers.Dense(filters, activation='sigmoid')(se)
 
-    return scale
+    x = layers.multiply([init, se])
+    return x
 
 
 def create_model(input_shape):
     inputs = Input(shape=input_shape)
     i = 0
 
-    nb_filter = [32, 64, 128, 256, 512, 256, 128, 64, 32]
-
     #0
-    x = Conv2D(nb_filter[i], (3, 3), padding='same', activation='relu')(inputs)
-    x = BN(x)
-    # x = Activation('relu')(x)
-    x = Conv2D(nb_filter[i], (3, 3), padding='same', activation='relu')(x)
-    x0 = BN(x)
-    # x = Activation('relu')(x0)
-    i += 1
+    x = down_conv(inputs, 32)
+    x0 = res_block(x, 32)
 
     #1
-    x = dw_conv(x0, nb_filter[i])
-    x1 = res_block(x, nb_filter[i])
-    i += 1
+    x = down_conv(x0, 64)
+    x1 = res_block(x, 64)
 
     #2
-    x = dw_conv(x1, nb_filter[i])
-    x2 = res_block(x, nb_filter[i])
-    i += 1
+    x = down_conv(x1, 128)
+    x2 = res_block(x, 128)
 
     #3
-    x = dw_conv(x2, nb_filter[i])
-    x3 = res_block(x, nb_filter[i])
-    i += 1
+    x = down_conv(x2, 256)
+    x3 = res_block(x, 256)
 
 
     #--------------- center ------------
-    x = dw_conv(x3, nb_filter[i])
-    x = res_block(x, nb_filter[i])
+    x = down_conv(x3, 512)
+    x = res_block(x, 512)
     #--------------- center ------------
-    i += 1
 
     #3
-    x = up_conv(x, x3, nb_filter[i])
-    x = res_block(x, nb_filter[i])
-    i += 1
+    x = up_conv(x, x3, 256)
+    x = res_block(x, 256)
 
     #2
-    x = up_conv(x, x2, nb_filter[i])
-    x = res_block(x, nb_filter[i])
-    i += 1
+    x = up_conv(x, x2, 128)
+    x = res_block(x, 128)
 
     #1
-    x = up_conv(x, x1, nb_filter[i])
-    x = res_block(x, nb_filter[i])
-    i += 1
+    x = up_conv(x, x1, 64)
+    x = res_block(x, 64)
 
     #0
-    x = up_conv(x, x0, nb_filter[i])
-    x = res_block(x, nb_filter[i])
-    # x = Activation('relu')(x)
+    x = up_conv(x, x0, 32)
+    x = res_block(x, 32)
 
     classify = Conv2D(1, (1, 1), activation='sigmoid')(x)
     model = Model(inputs=inputs, outputs=classify)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-            loss = binary_crossentropy,
-            metrics = [dice_coef])
+                        loss = binary_crossentropy,
+                        metrics = [dice_coef])
 
     return model
 
 def getSEUnet():
     model = create_model((256,256,1))
-    #print(model.summary())
     return model
