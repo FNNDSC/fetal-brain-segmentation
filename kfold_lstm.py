@@ -35,46 +35,54 @@ import random
 
 
 def getModel(name):
-    if model_type == 'unet':
-        print('using unet as first model'
+    if name == 'unet':
+        print('using unet as first model')
         model = getUnet()
-    elif model_type == 'resnetFCN':
-        print('using resnetFCN as first model'
+    elif name == 'resnetFCN':
+        print('using resnetFCN as first model')
         model = getResnet50FCN()
     elif model_type == 'resnetSEFCN':
-        print('using resnetSEFCN as first model'
+        print('using resnetSEFCN as first model')
         model = getResnetSE50FCN()
-    elif model_type == 'vgg19FCN':
-        print('using vgg19FCN as first model'
+    elif name == 'vgg19FCN':
+        print('using vgg19FCN as first model')
         model = getVGG19FCN()
-    elif model_type == 'vgg19SEFCN':
-        print('using vgg19SEFCN as first model'
+    elif name == 'vgg19SEFCN':
+        print('using vgg19SEFCN as first model')
         model = getVGG19SEFCN()
-    elif model_type == 'UnetResNet18':
-        print('using UnetResNet18 as first model'
+    elif name == 'UnetResNet18':
+        print('using UnetResNet18 as first model')
         model = getUnetResnet18()
-    elif model_type == 'UnetResNet18SE':
-        print('using UnetResNet18SE as first model'
+    elif name == 'UnetResNet18SE':
+        print('using UnetResNet18SE as first model')
         model = getUnetResnet18(se_version = True)
     else:
-        print('using UnetResNet18SE as first model'
+        print('using UnetResNet18SE as first model')
         model = getSEUnet()
 
     return model
 
-
 def lstmGenerator(images, masks, batch_size, pre_model, pre_graph):
     i=0
+    reset = False
+
     while True:
         with pre_graph.as_default():
             batch_features = []
             batch_labels = []
             c = batch_size * i
 
-            if c >= len(images) - 1:
+            if reset:
                 i = 0
                 c = 0
+                reset = False
+
             for j in range(c, c + batch_size):
+
+                if j >= len(images):
+                    reset = True
+                    continue
+
                 if j == 0:
                     res1 =  np.expand_dims(np.zeros(images[j].shape), axis=0)
                 else:
@@ -91,8 +99,8 @@ def lstmGenerator(images, masks, batch_size, pre_model, pre_graph):
                     res3 = pre_model.predict(img3)
 
                 res = np.concatenate((res1,res2,res3), axis=0)
-                res[res>=0.7] = 1
-                res[res<0.7] = 0
+                res[res>=0.5] = 1
+                res[res<0.5] = 0
 
                 mask = masks[j]
                 mask[mask == 255] = 1
@@ -101,6 +109,18 @@ def lstmGenerator(images, masks, batch_size, pre_model, pre_graph):
                 batch_labels.append(mask)
 
             i += 1
+
+            if len(batch_features) == 0:
+                res1 = np.expand_dims(np.zeros(images[0].shape), axis=0)
+                res2 = np.expand_dims(np.zeros(images[0].shape), axis=0)
+                res3 = np.expand_dims(np.zeros(images[0].shape), axis=0)
+                res = np.concatenate((res1,res2,res3), axis=0)
+
+                mask = np.zeros(images[0].shape)
+
+                batch_features.append(res)
+                batch_labels.append(mask)
+
             yield np.array(batch_features), np.array(batch_labels)
 
 def lstmModel():
@@ -130,64 +150,64 @@ def lstmModel():
 
         return model
 
-model_names = ['unet'] #['vgg19SEFCN', 'resnetFCN', 'resnetSEFCN', 'unetResnet18', 'unetResnet18SE']
+model_type = 'vgg19FCN'
 
+K.clear_session()
 
-for model_type in model_names:
-    K.clear_session()
-    print('Working with %s'%model_type)
-    image_files, mask_files = load_data_files('data/kfold_data/')
+image_files, mask_files = load_data_files('data/kfold_data/')
 
-    skf = getKFolds(image_files, mask_files, n=10)
+skf = getKFolds(image_files, mask_files, n=10)
 
-    kfold_indices = []
-    for train_index, val_index in skf.split(image_files, mask_files):
-        kfold_indices.append({'train': train_index, 'val': val_index})
+kfold_indices = []
+for train_index, val_index in skf.split(image_files, mask_files):
+    kfold_indices.append({'train': train_index, 'val': val_index})
 
-    #Get data and generators
-    dh = DataHandler()
+#Get data and generators
+dh = DataHandler()
 
-    pre_graph = tf.get_default_graph()
+pre_graph = tf.get_default_graph()
 
-    for i in range(len(kfold_indices)):
-        with pre_graph.as_default():
-            pre_model = getModel(model_type)
-            pre_model.load_weights('logs/unet/kfold_unet/kfold_unet_dice_DA_K%d/kfold_unet_dice_DA_K%d_weights.h5'%(i,i))
+for i in range(7, len(kfold_indices)):
+    with pre_graph.as_default():
+        pre_model = getModel(model_type)
+        pre_model.load_weights('logs/%s/kfold_%s/kfold_%s_dice_DA_K%d/kfold_%s_dice_DA_K%d_weights.h5'%(
+            model_type,model_type,model_type,i,model_type,i))
 
-        exp_name = 'kfold_%s_dice_LSTM_K%d'%(model_type, i)
-        #get parameters
-        params = getParams(exp_name, model_type, is_lstm=True)
+    exp_name = 'kfold_%s_dice_LSTM_K%d'%(model_type, i)
+    #get parameters
+    params = getParams(exp_name, model_type, is_lstm=True)
 
-        #set common variables
-        epochs = 10
-        batch_size = 2
-        verbose = 1
+    #set common variables
+    epochs = 10
+    batch_size = 4
+    verbose = 1
 
-        tr_images, tr_masks, te_images, te_masks = dh.getKFoldData(image_files,
-                mask_files, kfold_indices[i])
+    tr_images, tr_masks, te_images, te_masks = dh.getKFoldData(image_files,
+            mask_files, kfold_indices[i])
 
-        train_generator = lstmGenerator(tr_images, tr_masks, batch_size, pre_model, pre_graph)
-        val_generator = lstmGenerator(te_images, te_masks, batch_size, pre_model, pre_graph)
+    #TRAIN WITH 20%
+    val_generator = lstmGenerator(tr_images, tr_masks, batch_size, pre_model, pre_graph)
+    train_generator = lstmGenerator(te_images, te_masks, batch_size, pre_model, pre_graph)
 
-        #Get model and add weights
+    #Get model and add weights
 
-        lstm_graph = tf.get_default_graph()
-        with lstm_graph.as_default():
-            model = lstmModel()
+    lstm_graph = tf.get_default_graph()
+    with lstm_graph.as_default():
+        model = lstmModel()
 
-        model_json = model.to_json()
-        with open(params['model_name'], "w") as json_file:
-             json_file.write(model_json)
+    model_json = model.to_json()
+    with open(params['model_name'], "w") as json_file:
+         json_file.write(model_json)
 
-        Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
+    Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
 
-        #Train the model
-        with lstm_graph.as_default():
-            history = model.fit_generator(train_generator,
-                epochs=epochs,
-                steps_per_epoch = len(tr_images) / batch_size,
-                validation_data = val_generator,
-                validation_steps = len(te_images) / batch_size,
-                verbose = verbose,
-                max_queue_size = 1,
-                callbacks = [Checkpoint, TenBoard])
+    #Train the model
+    with lstm_graph.as_default():
+        history = model.fit_generator(train_generator,
+            epochs=epochs,
+            steps_per_epoch = math.floor(len(te_images) // batch_size),
+            validation_data = val_generator,
+            validation_steps = math.floor(len(tr_images) // batch_size),
+            verbose = verbose,
+            max_queue_size = 1,
+            callbacks = [Checkpoint, TenBoard])

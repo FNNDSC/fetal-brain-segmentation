@@ -9,11 +9,6 @@ import tensorflow as tf
 from losses import *
 
 def getVGG19FCN():
-
-	tf.reset_default_graph()
-	sess = tf.Session()
-	K.clear_session()
-
 	# load ResNet
 	n_classes = 1
 	stride = 32
