@@ -2,11 +2,12 @@ from datahandler import DataHandler
 from models.unet_se import *
 from models.unet import *
 from models.resnet_fcn import *
-#from models.resnet_se_fcn import *
+from models.resnet_se_fcn import *
+from models.unet_resnet_se import *
 from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
-from models.unet_resnet import *
+# from models.unet_resnet import *
 
 from generator import *
 from params import *
@@ -38,20 +39,23 @@ def getModel(name):
         model = getVGG19FCN()
     elif name == 'vgg19SEFCN':
         model = getVGG19SEFCN()
-    elif name == 'unetResnet18':
-        model = getUnetResnet18()
-    elif name == 'unetResnet18SE':
-        model = getUnetResnet18(se_version = True)
+    elif name == 'unet_resnet':
+        model = getUnetRes()
+    elif name == 'unet_resnet_se':
+        model = getUnetRes(se_version = True)
+    # elif name == 'unetResnet18':
+    #     model = getUnetResnet18()
+    # elif name == 'unetResnet18SE':
+    #     model = getUnetResnet18(se_version = True)
     else:
         print('error')
         return -1
 
     return model
 
-model_names = ['unetResnet18', 'unetResnet18SE']
+model_names = ['unet_resnet_se']
 
 for model_type in model_names:
-
     image_files, mask_files = load_data_files('data/kfold_data/')
 
     skf = getKFolds(image_files, mask_files, n=10)
@@ -62,7 +66,7 @@ for model_type in model_names:
 
     #Get data and generators
     dh = DataHandler()
-    start = 0
+    start = 1
 
     for i in range(start, len(kfold_indices)):
 

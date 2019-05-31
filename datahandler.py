@@ -99,22 +99,21 @@ class DataHandler:
 
     def getKFoldData(self, image_files, mask_files, indices, eval=False):
 
-        if eval:
+        if not eval:
             image_train_files = self.getFilesFromIndices(image_files, indices['train'])
             mask_train_files = self.getFilesFromIndices(mask_files, indices['train'])
 
             tr_images, tr_masks = self.__getImages(image_names = image_train_files,
-                    mask_names = mask_train_files, from_names=True)
-        
-        if not eval:
-            image_val_files = self.getFilesFromIndices(image_files, indices['val'])
-            mask_val_files = self.getFilesFromIndices(mask_files, indices['val'])
+                        mask_names = mask_train_files, from_names=True)
 
-            val_images, val_masks = self.__getImages(image_names = image_val_files,
+        image_val_files = self.getFilesFromIndices(image_files, indices['val'])
+        mask_val_files = self.getFilesFromIndices(mask_files, indices['val'])
+
+        val_images, val_masks = self.__getImages(image_names = image_val_files,
                     mask_names = mask_val_files, from_names=True)
 
         if eval:
-            return tr_images, tr_masks
+            return val_images, val_masks
 
         return tr_images, tr_masks, val_images, val_masks
 

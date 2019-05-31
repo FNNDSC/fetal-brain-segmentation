@@ -19,27 +19,32 @@ def bce_dice_loss(y_true, y_pred):
     return binary_crossentropy(y_true, y_pred) + (1 - dice_loss(y_true, y_pred))
 
 
-def down_conv(init, nb_filter):
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu', 
+def down_conv(init, nb_filter, se_version, no_down = False):
+    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
     x = BatchNormalization()(x)
-    x = squeeze_excite_block(x)
 
-    x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)
+    if se_version:
+        x = squeeze_excite_block(x)
+
+    if not no_down:
+        x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
     return x
 
-def up_conv(init, skip, nb_filter):
+def up_conv(init, skip, nb_filter, se_version):
     x = UpSampling2D(size = (2,2))(init)
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu', 
+    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(x)
     x = BatchNormalization()(x)
-    x = squeeze_excite_block(x)
+
+    if se_version:
+        x = squeeze_excite_block(x)
 
     x = layers.concatenate([x, skip], axis=3)
     return x
 
-def res_block(init, nb_filter):
+def res_block(init, nb_filter, se_version):
     x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
     x = BatchNormalization()(x)
@@ -48,7 +53,8 @@ def res_block(init, nb_filter):
         kernel_initializer = 'he_normal')(x)
     x = BatchNormalization()(x)
 
-    x = squeeze_excite_block(x)
+    if se_version:
+        x = squeeze_excite_block(x)
 
     x = layers.concatenate([init, x], axis=3)
     return x
@@ -68,47 +74,50 @@ def squeeze_excite_block(input, ratio=16):
     return x
 
 
-def create_model(input_shape):
+def create_model(input_shape, se_version):
     inputs = Input(shape=input_shape)
     i = 0
 
     #0
-    x = down_conv(inputs, 32)
-    x0 = res_block(x, 32)
+    x = down_conv(inputs, 32, se_version)
+    x0 = res_block(x, 32, se_version)
 
     #1
-    x = down_conv(x0, 64)
-    x1 = res_block(x, 64)
+    x = down_conv(x0, 64, se_version)
+    x1 = res_block(x, 64, se_version)
 
     #2
-    x = down_conv(x1, 128)
-    x2 = res_block(x, 128)
+    x = down_conv(x1, 128, se_version)
+    x2 = res_block(x, 128, se_version)
 
     #3
-    x = down_conv(x2, 256)
-    x3 = res_block(x, 256)
+    x = down_conv(x2, 256, se_version)
+    x3 = res_block(x, 256, se_version)
 
 
     #--------------- center ------------
-    x = down_conv(x3, 512)
-    x = res_block(x, 512)
+    x = down_conv(x3, 512, se_version)
+    x = res_block(x, 512, se_version)
     #--------------- center ------------
 
     #3
-    x = up_conv(x, x3, 256)
-    x = res_block(x, 256)
+    x = up_conv(x, x3, 256, se_version)
+    x = res_block(x, 256, se_version)
 
     #2
-    x = up_conv(x, x2, 128)
-    x = res_block(x, 128)
+    x = up_conv(x, x2, 128, se_version)
+    x = res_block(x, 128, se_version)
 
     #1
-    x = up_conv(x, x1, 64)
-    x = res_block(x, 64)
+    x = up_conv(x, x1, 64, se_version)
+    x = res_block(x, 64, se_version)
 
     #0
-    x = up_conv(x, x0, 32)
-    x = res_block(x, 32)
+    x = up_conv(x, x0, 32, se_version)
+    x = res_block(x, 32, se_version)
+
+    x = up_conv(x, inputs, 16, se_version)
+    x = res_block(x, 16, se_version)
 
     classify = Conv2D(1, (1, 1), activation='sigmoid')(x)
     model = Model(inputs=inputs, outputs=classify)
@@ -119,6 +128,7 @@ def create_model(input_shape):
 
     return model
 
-def getSEUnet():
-    model = create_model((256,256,1))
+def getUnetRes(se_version=False):
+    model = create_model((256,256,1), se_version)
+    #print(model.summary())
     return model

@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Input, MaxPooling2D, Dropout, Conv2D, Conv2DTranspose, TimeDistributed, Bidirectional, ConvLSTM2D
+from keras.layers import Input, MaxPooling2D, Dropout, Conv2D, Conv2DTranspose, TimeDistributed, Lambda, Bidirectional, ConvLSTM2D, add
 from keras import backend as K
 import tensorflow as tf
 from keras.optimizers import RMSprop, Adam, SGD
@@ -15,7 +15,7 @@ from models.resnet_se_fcn import *
 from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
-from models.unet_resnet import *
+# from models.unet_resnet import *
 
 from generator import *
 from params import *
@@ -63,25 +63,16 @@ def getModel(name):
     return model
 
 def lstmGenerator(images, masks, batch_size, pre_model, pre_graph):
-    i=0
     reset = False
 
     while True:
         with pre_graph.as_default():
             batch_features = []
             batch_labels = []
-            c = batch_size * i
 
-            if reset:
-                i = 0
-                c = 0
-                reset = False
+            for i in range(batch_size):
 
-            for j in range(c, c + batch_size):
-
-                if j >= len(images):
-                    reset = True
-                    continue
+                j = np.random.choice(len(images),1)[0]
 
                 if j == 0:
                     res1 =  np.expand_dims(np.zeros(images[j].shape), axis=0)
@@ -108,18 +99,6 @@ def lstmGenerator(images, masks, batch_size, pre_model, pre_graph):
                 batch_features.append(res)
                 batch_labels.append(mask)
 
-            i += 1
-
-            if len(batch_features) == 0:
-                res1 = np.expand_dims(np.zeros(images[0].shape), axis=0)
-                res2 = np.expand_dims(np.zeros(images[0].shape), axis=0)
-                res3 = np.expand_dims(np.zeros(images[0].shape), axis=0)
-                res = np.concatenate((res1,res2,res3), axis=0)
-
-                mask = np.zeros(images[0].shape)
-
-                batch_features.append(res)
-                batch_labels.append(mask)
 
             yield np.array(batch_features), np.array(batch_labels)
 
@@ -129,28 +108,29 @@ def lstmModel():
 
         inputs = Input((3, 256, 256, 1))
 
-        bclstm = Bidirectional(ConvLSTM2D(32, 3, return_sequences = True, padding='same', activation = 'relu'))(inputs)
-        bclstm = Bidirectional(ConvLSTM2D(32, 3, return_sequences = True, padding='same', activation = 'relu'))(bclstm)
+        original = Lambda(lambda x : x[:,1,:,:,:] * 0.5)(inputs)
 
-        pool = TimeDistributed(MaxPooling2D(pool_size=2))(bclstm)
-
-        bclstm = Bidirectional(ConvLSTM2D(64, 3, return_sequences = True, padding='same', activation = 'relu'))(pool)
-        bclstm = Bidirectional(ConvLSTM2D(64, 3, return_sequences = True, padding='same', activation = 'relu'))(bclstm)
+        pool = TimeDistributed(MaxPooling2D(pool_size=2))(inputs)
+        bclstm = Bidirectional(ConvLSTM2D(64, 3, return_sequences = True,
+                                          padding='same', activation = 'relu'))(pool)
         bclstm = Bidirectional(ConvLSTM2D(64, 3, padding='same', activation = 'relu'))(bclstm)
 
         up = Conv2DTranspose(64,3, strides=2, padding='same', activation = 'relu')(bclstm)
-        conv = Conv2D(64, 3, activation = 'relu', padding='same')(up)
+        drop = Dropout(0.5)(up)
+        outputs = Conv2D(1, (1,1), activation = 'sigmoid')(drop)
 
-        outputs = Conv2D(1, (1,1), activation = 'sigmoid')(conv)
+        outputs = Lambda(lambda x : x * 0.5)(outputs)
 
-        model = Model(input = inputs, output = outputs)
+        outputs = add([outputs, original])
+
+        model = Model(inputs = inputs, outputs = outputs)
 
         model.compile(optimizer = Adam(lr = 1e-4),
                 loss = binary_crossentropy, metrics = [dice_coef])
 
         return model
 
-model_type = 'vgg19FCN'
+model_type = 'unet'
 
 K.clear_session()
 
@@ -167,27 +147,27 @@ dh = DataHandler()
 
 pre_graph = tf.get_default_graph()
 
-for i in range(7, len(kfold_indices)):
+
+for i in range(9,10):
     with pre_graph.as_default():
         pre_model = getModel(model_type)
         pre_model.load_weights('logs/%s/kfold_%s/kfold_%s_dice_DA_K%d/kfold_%s_dice_DA_K%d_weights.h5'%(
             model_type,model_type,model_type,i,model_type,i))
 
-    exp_name = 'kfold_%s_dice_LSTM_K%d'%(model_type, i)
+    exp_name = 'kfold_%s_BiCLSTM_K%d'%(model_type, i)
     #get parameters
     params = getParams(exp_name, model_type, is_lstm=True)
 
     #set common variables
     epochs = 10
-    batch_size = 4
+    batch_size = 10
     verbose = 1
 
     tr_images, tr_masks, te_images, te_masks = dh.getKFoldData(image_files,
             mask_files, kfold_indices[i])
 
-    #TRAIN WITH 20%
-    val_generator = lstmGenerator(tr_images, tr_masks, batch_size, pre_model, pre_graph)
-    train_generator = lstmGenerator(te_images, te_masks, batch_size, pre_model, pre_graph)
+    train_generator = lstmGenerator(tr_images, tr_masks, batch_size, pre_model, pre_graph)
+    val_generator = lstmGenerator(te_images, te_masks, batch_size, pre_model, pre_graph)
 
     #Get model and add weights
 
@@ -205,9 +185,9 @@ for i in range(7, len(kfold_indices)):
     with lstm_graph.as_default():
         history = model.fit_generator(train_generator,
             epochs=epochs,
-            steps_per_epoch = math.floor(len(te_images) // batch_size),
+            steps_per_epoch = 200,
             validation_data = val_generator,
-            validation_steps = math.floor(len(tr_images) // batch_size),
+            validation_steps = 20,
             verbose = verbose,
             max_queue_size = 1,
             callbacks = [Checkpoint, TenBoard])
