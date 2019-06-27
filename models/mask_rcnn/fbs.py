@@ -86,6 +86,8 @@ class FBSInferenceConfig(FBSConfig):
     # Set batch size to 1 to run one image at a time
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+    MASK_SHAPE = [64,64]
+    MASK_POOL_SIZE = 64
 
 #######################################################################
 #   Data
@@ -133,8 +135,8 @@ class FBSDataset(utils.Dataset):
             masks_dir = os.path.join(dataset_dir, 'train/masks/*')
 
         elif subset is 'validate':
-            images_dir = os.path.join(dataset_dir, 'test/images/*')
-            masks_dir = os.path.join(dataset_dir, 'test/masks/*')
+            images_dir = os.path.join(dataset_dir, 'kfold_data/images/3*')
+            masks_dir = os.path.join(dataset_dir, 'kfold_data/masks/3*')
 
         elif subset is 'eval':
             images_dir = os.path.join(dataset_dir, image_file)

@@ -5,7 +5,7 @@ import math
 class FBSConfig(Config):
     NAME = 'FBM' #Overwrite
 
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
 
     NUM_CLASSES = 1 + 1 # background + brain
 
@@ -28,7 +28,6 @@ class FBSConfig(Config):
     IMAGE_MAX_DIM = 256
 
     IMAGE_SHAPE = [256,256,1]
-    MASK_SHAPE = [56,56]
 
     # one channel
     MEAN_PIXEL = np.array([73.99])
@@ -76,16 +75,6 @@ class TrainFBSConfig(FBSConfig):
         self.STEPS_PER_EPOCH = math.ceil(train_steps / img_per_gpu)
         self.VALIDATION_STEPS = math.ceil(val_steps / img_per_gpu)
 
-        self.MASK_SHAPE = [14, 14]
-        self.POOL_SIZE = 14
-        self.MASK_POOL_SIZE = 14
-        if wl:
-            self.LOSS_WEIGHTS = {
-                    "rpn_class_loss": .1,
-                    "rpn_bbox_loss": 1.,
-                    "mrcnn_class_loss": .1,
-                    "mrcnn_bbox_loss": 1.,
-                    "mrcnn_mask_loss": 2. }
 
         super(FBSConfig, self).__init__()
 

@@ -27,7 +27,7 @@ import tensorflow as tf
 
 def getModel(name):
     print('Working with %s'%name)
-    if name == 'unet':
+    if name == 'unet' or name == 'unet_focal':
         model = getUnet()
     elif name == 'unet_se':
         model = getSEUnet()
@@ -53,7 +53,7 @@ def getModel(name):
 
     return model
 
-model_names = ['unet_resnet_se']
+model_names = ['unet_focal']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
