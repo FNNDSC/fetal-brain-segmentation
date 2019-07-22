@@ -123,23 +123,23 @@ def getVGG19SEFCN():
 
     #32
     pool_5 = base_model.get_layer('block5_pool').output
-    up_32 = layers.Conv2DTranspose(n_classes, 3, name='up_32', strides=(stride), activation='relu')(pool_5)
+    up_32 = layers.Conv2DTranspose(n_classes, 3, name='up_32', strides=(stride), activation='relu', kernel_initializer = 'he_normal')(pool_5)
     bn1 = layers.BatchNormalization(name='BN_1')(up_32)
-    pred_32 = layers.Conv2D(n_classes, 3, name='pred_32', padding = 'same', activation='sigmoid')(bn1)
+    pred_32 = layers.Conv2D(n_classes, 3, name='pred_32', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(bn1)
 
     #16
     pool_4 = base_model.get_layer('block4_pool').output
-    up_16 = layers.Conv2DTranspose(n_classes, 3, name='up_16', strides=(stride//2), activation='relu')(pool_4)
+    up_16 = layers.Conv2DTranspose(n_classes, 3, name='up_16', strides=(stride//2), activation='relu', kernel_initializer = 'he_normal')(pool_4)
     bn2 = layers.BatchNormalization(name='BN_2')(up_16)
     addition_1 = layers.add([bn2, pred_32])
-    pred_16 = layers.Conv2D(n_classes, 3, name='pred_16', padding = 'same', activation='sigmoid')(addition_1)
+    pred_16 = layers.Conv2D(n_classes, 3, name='pred_16', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(addition_1)
 
     #8
     pool_3 = base_model.get_layer('block3_pool').output
-    up_8 = layers.Conv2DTranspose(n_classes, 3, name='up_8', strides=(stride//4), activation='relu')(pool_3)
+    up_8 = layers.Conv2DTranspose(n_classes, 3, name='up_8', strides=(stride//4), activation='relu', kernel_initializer = 'he_normal')(pool_3)
     bn3 = layers.BatchNormalization(name='BN_3')(up_8)
     addition_2 = layers.add([bn3, pred_16])
-    pred_8 = layers.Conv2D(n_classes, 3, name='pred_8', padding = 'same', activation='sigmoid')(addition_2)
+    pred_8 = layers.Conv2D(n_classes, 3, name='pred_8', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(addition_2)
 
     x = pred_8
 
