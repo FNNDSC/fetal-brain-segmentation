@@ -106,10 +106,6 @@ def ResNet50():
     """Instantiates the ResNet50 architecture.
     """
 
-    tf.reset_default_graph()
-    sess = tf.Session()
-    K.clear_session()
-
     bn_axis = 3
     img_input = layers.Input(shape=(256,256,1))
 
@@ -150,37 +146,59 @@ def ResNet50():
     return model
 
 def getResnetSE50FCN():
-    base_model = ResNet50()
+
+    tf.reset_default_graph()
+    sess = tf.Session()
+    K.clear_session()
 
     n_classes = 1
     stride = 32
 
     input_tensor = Input(shape=(256, 256, 1))
-    base_model = ResNet50(weights=None, include_top=False, input_tensor=input_tensor)
+    base_model = ResNet50()
 
-    #32
-    act_49 = base_model.get_layer('activation_49').output
-    up_32 = layers.Conv2DTranspose(n_classes, 3, name='up_32', strides=(stride), activation='relu', kernel_initializer = 'he_normal')(act_49)
-    pred_32 = layers.Conv2D(n_classes, 3, name='pred_32', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(up_32)
+    input_tensor = layers.Input(shape=(256, 256, 1))
+    base_model = VGG19(weights=None, include_top=False, input_tensor=input_tensor)
 
-    #16
-    act_40 = base_model.get_layer('activation_40').output
-    up_16 = layers.Conv2DTranspose(n_classes, 3, name='up_16', strides=(stride//2), activation='relu', kernel_initializer = 'he_normal')(act_40)
-    addition_1 = layers.add([up_16, pred_32])
-    pred_16 = layers.Conv2D(n_classes, 3, name='pred_16', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(addition_1)
+    # add classifier
+    x = base_model.get_layer('activation_49').output
+    x = layers.Conv2D(n_classes,3, name = 'pred_32',padding = 'same',
+        activation = 'relu', kernel_initializer='he_normal')(x)
+    ## add 32s upsampler
+    x = layers.UpSampling2D(size=(stride), interpolation='bilinear')(x)
+    x = layers.Activation('sigmoid')(x)
+    pred_32s = x
 
-    #8
-    act_22 = base_model.get_layer('activation_22').output
-    up_8 = layers.Conv2DTranspose(n_classes, 3, name='up_8', strides=(stride//4), activation='relu', kernel_initializer = 'he_normal')(act_22)
-    addition_2 = layers.add([up_8, pred_16])
-    pred_8 = layers.Conv2D(n_classes, 3, name='pred_8', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(addition_2)
+    # 16s
+    x = base_model.get_layer('activation_40').output
+    x = layers.Conv2D(n_classes, 3, name = 'pred_16',padding = 'same',
+        activation='relu', kernel_initializer='he_normal')(x)
+    x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
+    x = layers.Conv2D(n_classes, 3, name = 'pred_up_16', padding = 'same', 
+        kernel_initializer='he_normal')(x)
 
-    x = pred_8
+    # merge classifiers
+    x = layers.add([x, pred_32s])
+    x = layers.Activation('sigmoid')(x)
+    pred_16s = x
+
+    x = base_model.get_layer('activation_22').output
+    x = layers.Conv2D(n_classes, 3, name = 'pred_8', padding = 'same',
+        activation='relu', kernel_initializer='he_normal')(x)
+    x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
+    x = layers.Conv2D(n_classes, 3, name = 'pred_up_8',padding = 'same', 
+        kernel_initializer='he_normal')(x)
+
+    # merge classifiers
+    x = layers.add([x, pred_16s])
+    x = layers.Activation('sigmoid')(x)
 
     model = Model(input=base_model.input,output=x)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-                loss = binary_crossentropy,
-                metrics = [dice_coef])
+        loss = binary_crossentropy,
+        metrics = [dice_coef])
 
     return model
+
+    

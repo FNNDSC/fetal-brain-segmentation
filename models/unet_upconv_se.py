@@ -30,9 +30,9 @@ def squeeze_excite_block(input, ratio=16):
 
 def getSEUnetUpconv():
 
-    # tf.reset_default_graph()
-    # sess = tf.Session()
-    # K.clear_session()
+    tf.reset_default_graph()
+    sess = tf.Session()
+    K.clear_session()
 
     inputs = layers.Input((256, 256, 1))
 
@@ -91,7 +91,7 @@ def getSEUnetUpconv():
     model = Model(inputs = inputs, outputs = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-                        loss=binary_crossentropy, #[binary_focal_loss(gamma=1., alpha=0.6)],
-                        metrics = [dice_coef])
+        loss=binary_crossentropy, #[binary_focal_loss(gamma=1., alpha=0.6)],
+        metrics = [dice_coef])
 
     return model
