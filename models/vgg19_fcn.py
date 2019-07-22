@@ -9,46 +9,33 @@ import tensorflow as tf
 from losses import *
 
 def getVGG19FCN():
-	# load ResNet
 	n_classes = 1
 	stride = 32
 
 	input_tensor = layers.Input(shape=(256, 256, 1))
 	base_model = VGG19(weights=None, include_top=False, input_tensor=input_tensor)
 
-	# add classifier
-	x = base_model.get_layer('block5_pool').output
-	x = layers.Dropout(0.5)(x)
+	#32
+	pool_5 = base_model.get_layer('block5_pool').output
+	up_32 = layers.Conv2DTranspose(n_classes, 3, name='up_32', strides=(stride), activation='relu')(pool_5)
+	bn1 = layers.BatchNormalization(name='BN_1')(up_32)
+	pred_32 = layers.Conv2D(n_classes, 3, name='pred_32', padding = 'same', activation='sigmoid')(bn1)
 
-	x = layers.Conv2D(n_classes,1,name = 'pred_32',padding = 'valid', kernel_initializer='he_normal')(x)
+	#16
+	pool_4 = base_model.get_layer('block4_pool').output
+	up_16 = layers.Conv2DTranspose(n_classes, 3, name='up_16', strides=(stride//2), activation='relu')(pool_4)
+	bn2 = layers.BatchNormalization(name='BN_2')(up_16)
+	addition_1 = layers.add([bn2, pred_32])
+	pred_16 = layers.Conv2D(n_classes, 3, name='pred_16', padding = 'same', activation='sigmoid')(addition_1)
 
-	## add 32s upsampler
+	#8
+	pool_3 = base_model.get_layer('block3_pool').output
+	up_8 = layers.Conv2DTranspose(n_classes, 3, name='up_8', strides=(stride//4), activation='relu')(pool_3)
+	bn3 = layers.BatchNormalization(name='BN_3')(up_8)
+	addition_2 = layers.add([bn3, pred_16])
+	pred_8 = layers.Conv2D(n_classes, 3, name='pred_8', padding = 'same', activation='sigmoid')(addition_2)
 
-	x = layers.UpSampling2D(size=(stride), interpolation='bilinear')(x)
-	x = layers.Activation('sigmoid')(x)
-	pred_32s = x
-
-	# 16s
-	x = base_model.get_layer('block5_conv4').output
-	x = layers.Dropout(0.5)(x)
-	x = layers.Conv2D(n_classes,1,name = 'pred_16',padding = 'valid', kernel_initializer='he_normal')(x)
-	x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
-	x = layers.Conv2D(n_classes,5,name = 'pred_up_16',padding = 'same', kernel_initializer='he_normal')(x)
-
-	# merge classifiers
-	x = layers.add([x, pred_32s])
-	x = layers.Activation('sigmoid')(x)
-	pred_16s = x
-
-	x = base_model.get_layer('block4_conv4').output
-	x = layers.Dropout(0.5)(x)
-	x = layers.Conv2D(n_classes,1,name = 'pred_8',padding = 'valid', kernel_initializer='he_normal')(x)
-	x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
-	x = layers.Conv2D(n_classes,5,name = 'pred_up_8',padding = 'same', kernel_initializer='he_normal')(x)
-
-	# merge classifiers
-	x = layers.add([x, pred_16s])
-	x = layers.Activation('sigmoid')(x)
+	x = pred_8
 
 	model = Model(input=base_model.input,output=x)
 	model.compile(optimizer = Adam(lr = 1e-4),
