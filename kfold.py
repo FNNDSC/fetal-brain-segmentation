@@ -7,6 +7,9 @@ from models.unet_resnet_se import *
 from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
+from models.unet_upconv import *
+from models.unet_upconv_se import *
+from models.unet_resnet_upconv_se import *
 # from models.unet_resnet import *
 
 from generator import *
@@ -29,6 +32,10 @@ def getModel(name):
     print('Working with %s'%name)
     if name == 'unet' or name == 'unet_focal':
         model = getUnet()
+    elif name == 'unet_upconv':
+        model = getUnetUpconv()
+    elif name == 'unet_upconv_se':
+        model = getSEUnetUpconv()
     elif name == 'unet_se':
         model = getSEUnet()
     elif name == 'resnetFCN':
@@ -43,6 +50,10 @@ def getModel(name):
         model = getUnetRes()
     elif name == 'unet_resnet_se':
         model = getUnetRes(se_version = True)
+    elif name == 'unet_resnet_upconv':
+        model = getUnetResUpconv()
+    elif name == 'unet_resnet_upconv_se':
+        model = getUnetResUpconv(se_version = True)
     # elif name == 'unetResnet18':
     #     model = getUnetResnet18()
     # elif name == 'unetResnet18SE':
@@ -53,7 +64,7 @@ def getModel(name):
 
     return model
 
-model_names = ['unet_focal']
+model_names = ['unet_resnet_upconv', 'unet_resnet_upconv_se']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
@@ -66,7 +77,7 @@ for model_type in model_names:
 
     #Get data and generators
     dh = DataHandler()
-    start = 1
+    start = 0
 
     for i in range(start, len(kfold_indices)):
 

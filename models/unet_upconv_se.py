@@ -2,8 +2,9 @@ import numpy as np
 from losses import *
 import keras
 from keras.models import *
-from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, UpSampling2D, concatenate
+from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate
 from keras.layers import Dense, Reshape, GlobalAveragePooling2D, multiply
+
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras import backend as K
@@ -11,6 +12,7 @@ from keras import backend as K
 from keras.losses import binary_crossentropy
 
 import tensorflow as tf
+
 
 def squeeze_excite_block(input, ratio=16):
     init = input
@@ -26,11 +28,12 @@ def squeeze_excite_block(input, ratio=16):
     x = multiply([init, se])
     return x
 
-def getSEUnet():
 
-    tf.reset_default_graph()
-    sess = tf.Session()
-    K.clear_session()
+def getSEUnetUpconv():
+
+    # tf.reset_default_graph()
+    # sess = tf.Session()
+    # K.clear_session()
 
     inputs = Input((256, 256, 1))
 
@@ -63,37 +66,40 @@ def getSEUnet():
     drop5 = Dropout(0.5)(se5)
 
     # Decoding (upwards)
-    up6 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop5))
-    merge6 = concatenate([se4,up6], axis = 3)
+    # up6 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop5))
+    up6 = Conv2DTranspose(256, 2, strides=(2,2), activation='relu', kernel_initializer='he_normal')(drop5)
+    merge6 = concatenate([drop4,up6], axis = 3)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
     se6 = squeeze_excite_block(conv6)
 
-    up7 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se6))
-    merge7 = concatenate([se3,up7], axis = 3)
+    # up7 = Conv2D(128, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv6))
+    up7 = Conv2DTranspose(128, 2, strides=(2,2), activation='relu', kernel_initializer='he_normal')(se6)
+    merge7 = concatenate([conv3,up7], axis = 3)
     conv7 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     conv7 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
     se7 = squeeze_excite_block(conv7)
 
-    up8 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se7))
-    merge8 = concatenate([se2,up8], axis = 3)
+    # up8 = Conv2D(64, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv7))
+    up8 = Conv2DTranspose(64, 2, strides=(2,2), activation='relu', kernel_initializer='he_normal')(se7)
+    merge8 = concatenate([conv2,up8], axis = 3)
     conv8 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
     se8 = squeeze_excite_block(conv8)
 
-    up9 = Conv2D(32, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se8))
-    merge9 = concatenate([se1,up9], axis = 3)
+    # up9 = Conv2D(32, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv8))
+    up9 = Conv2DTranspose(32, 2, strides=(2,2), activation='relu', kernel_initializer='he_normal')(se8)
+    merge9 = concatenate([conv1,up9], axis = 3)
     conv9 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
     conv9 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
     se9 = squeeze_excite_block(conv9)
 
     conv10 = Conv2D(1, 1, activation = 'sigmoid')(se9)
 
-    model = Model(input = inputs, output = conv10)
+    model = Model(inputs = inputs, outputs = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-                        loss = binary_crossentropy,
+                        loss=binary_crossentropy, #[binary_focal_loss(gamma=1., alpha=0.6)],
                         metrics = [dice_coef])
 
     return model
-
