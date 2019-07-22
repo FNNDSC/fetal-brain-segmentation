@@ -30,30 +30,30 @@ import tensorflow as tf
 
 def getModel(name):
     print('Working with %s'%name)
-    if name == 'unet' or name == 'unet_focal':
-        model = getUnet()
-    elif name == 'unet_upconv':
+    
+    if name == 'unet_upconv':
         model = getUnetUpconv()
     elif name == 'unet_upconv_se':
         model = getSEUnetUpconv()
-    elif name == 'unet_se':
-        model = getSEUnet()
+
     elif name == 'resnetFCN':
         model = getResnet50FCN()
     elif name == 'resnetSEFCN':
         model = getResnetSE50FCN()
+
     elif name == 'vgg19FCN':
         model = getVGG19FCN()
     elif name == 'vgg19SEFCN':
         model = getVGG19SEFCN()
-    elif name == 'unet_resnet':
-        model = getUnetRes()
-    elif name == 'unet_resnet_se':
-        model = getUnetRes(se_version = True)
-    elif name == 'unet_resnet_upconv':
-        model = getUnetResUpconv()
-    elif name == 'unet_resnet_upconv_se':
-        model = getUnetResUpconv(se_version = True)
+
+    # elif name == 'unet_resnet':
+    #     model = getUnetRes()
+    # elif name == 'unet_resnet_se':
+    #     model = getUnetRes(se_version = True)
+    # elif name == 'unet_resnet_upconv':
+    #     model = getUnetResUpconv()
+    # elif name == 'unet_resnet_upconv_se':
+    #     model = getUnetResUpconv(se_version = True)
     # elif name == 'unetResnet18':
     #     model = getUnetResnet18()
     # elif name == 'unetResnet18SE':
@@ -64,7 +64,7 @@ def getModel(name):
 
     return model
 
-model_names = ['unet_resnet_upconv', 'unet_resnet_upconv_se']
+model_names = ['vgg19FCN', 'vgg19SEFCN', 'unet_upconv', 'unet_upconv_se', 'resnetFCN', 'resnetSEFCN']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
