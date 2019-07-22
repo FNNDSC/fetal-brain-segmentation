@@ -33,13 +33,13 @@ def getResnet50FCN():
     #16
     act_40 = base_model.get_layer('activation_40').output
     up_16 = layers.Conv2DTranspose(n_classes, 3, name='up_16', strides=(stride//2), activation='relu', kernel_initializer = 'he_normal')(act_40)
-    addition_1 = layers.add([up_16, pred_32])
+    addition_1 = layers.concatenate([up_16, pred_32])
     pred_16 = layers.Conv2D(n_classes, 3, name='pred_16', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(addition_1)
 
     #8
     act_22 = base_model.get_layer('activation_22').output
     up_8 = layers.Conv2DTranspose(n_classes, 3, name='up_8', strides=(stride//4), activation='relu', kernel_initializer = 'he_normal')(act_22)
-    addition_2 = layers.add([up_88, pred_16])
+    addition_2 = layers.concatenate([up_88, pred_16])
     pred_8 = layers.Conv2D(n_classes, 3, name='pred_8', padding = 'same', activation='sigmoid', kernel_initializer = 'he_normal')(addition_2)
 
     x = pred_8
