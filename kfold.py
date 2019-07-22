@@ -1,15 +1,14 @@
 from datahandler import DataHandler
-from models.unet_se import *
-from models.unet import *
-from models.resnet_fcn import *
+# from models.unet_se import *
+# from models.unet import *
 from models.resnet_se_fcn import *
-from models.unet_resnet_se import *
+# from models.unet_resnet_se import *
 from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
 from models.unet_upconv import *
 from models.unet_upconv_se import *
-from models.unet_resnet_upconv_se import *
+# from models.unet_resnet_upconv_se import *
 # from models.unet_resnet import *
 
 from generator import *
@@ -30,7 +29,7 @@ import tensorflow as tf
 
 def getModel(name):
     print('Working with %s'%name)
-    
+
     if name == 'unet_upconv':
         model = getUnetUpconv()
     elif name == 'unet_upconv_se':
