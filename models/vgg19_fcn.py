@@ -19,10 +19,10 @@ def getVGG19FCN():
 	# add classifier
 	x = base_model.get_layer('block5_pool').output
 	x = layers.Dropout(0.5)(x)
-	x = layers.Conv2D(n_classes,3,name = 'pred_32',padding = 'same', 
-		kernel_initializer='he_normal', activation='relu')(x)
+	x = layers.Conv2D(n_classes,1,name = 'pred_32',padding = 'valid', kernel_initializer='he_normal', activation='relu')(x)
 
 	## add 32s upsampler
+
 	x = layers.UpSampling2D(size=(stride), interpolation='bilinear')(x)
 	x = layers.Activation('sigmoid')(x)
 	pred_32s = x
@@ -30,26 +30,24 @@ def getVGG19FCN():
 	# 16s
 	x = base_model.get_layer('block4_pool').output
 	x = layers.Dropout(0.5)(x)
-	x = layers.Conv2D(n_classes,3,name = 'pred_16',padding = 'same', 
-		kernel_initializer='he_normal', activation='relu')(x)
-	x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), 
-		interpolation='bilinear')(x)
+	x = layers.Conv2D(n_classes,1,name = 'pred_16',padding = 'valid', kernel_initializer='he_normal', activation='relu')(x)
+	x = layers.UpSampling2D(name='upsampling_16',size=(stride//2), interpolation='bilinear')(x)
+	x = layers.Conv2D(n_classes,5,name = 'pred_up_16',padding = 'same', kernel_initializer='he_normal', activation='relu')(x)
+
+	# merge classifiers
 	x = layers.add([x, pred_32s])
-	x = layers.Conv2D(n_classes,3,name = 'pred_up_16',padding = 'same', 
-		kernel_initializer='he_normal', activation='sigmoid')(x)
-	
+	x = layers.Activation('sigmoid')(x)
 	pred_16s = x
 
 	x = base_model.get_layer('block3_pool').output
 	x = layers.Dropout(0.5)(x)
-	x = layers.Conv2D(n_classes,3,name = 'pred_8',padding = 'same', 
-		kernel_initializer='he_normal', activation='relu')(x)
-	x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), 
-		interpolation='bilinear')(x)
-	x = layers.add([x, pred_16s])
-	x = layers.Conv2D(n_classes,3,name = 'pred_up_8',padding = 'same', 
-		kernel_initializer='he_normal', activation='sigmoid')(x)
+	x = layers.Conv2D(n_classes,1,name = 'pred_8',padding = 'valid', kernel_initializer='he_normal', activation='relu')(x)
+	x = layers.UpSampling2D(name='upsampling_8',size=(stride//4), interpolation='bilinear')(x)
+	x = layers.Conv2D(n_classes,5,name = 'pred_up_8',padding = 'same', kernel_initializer='he_normal', activation='relu')(x)
 
+	# merge classifiers
+	x = layers.add([x, pred_16s])
+	x = layers.Activation('sigmoid')(x)
 
 	model = Model(input=base_model.input,output=x)
 	model.compile(optimizer = Adam(lr = 1e-4),
