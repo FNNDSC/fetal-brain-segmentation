@@ -63,7 +63,7 @@ def getModel(name):
 
     return model
 
-model_names = ['vgg19FCN', 'vgg19SEFCN', 'unet_upconv', 'unet_upconv_se', 'resnetFCN', 'resnetSEFCN']
+model_names = ['vgg19FCN', 'vgg19SEFCN']#'unet_upconv', 'unet_upconv_se', 'resnetFCN', 'resnetSEFCN']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')

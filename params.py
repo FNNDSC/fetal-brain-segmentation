@@ -3,7 +3,7 @@ import os
 def getParams(exp_name, unet_type='unet', is_lstm = False):
     # General Training
     epochs = 25
-    batch_size = 32
+    batch_size = 16
     monitor = 'val_dice_coef'
     verbose = 1
     train_augmantation = True
