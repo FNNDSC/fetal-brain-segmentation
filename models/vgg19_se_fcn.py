@@ -117,7 +117,7 @@ def getVGG19SEFCN():
     tf.reset_default_graph()
     sess = tf.Session()
     K.clear_session()
-    
+
     base_model = getVGG19SE()
 
     n_classes = 1

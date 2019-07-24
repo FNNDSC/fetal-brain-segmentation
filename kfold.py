@@ -8,7 +8,7 @@ from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
 from models.unet_upconv import *
 from models.unet_upconv_se import *
-# from models.unet_resnet_upconv_se import *
+from models.unet_resnet_upconv_se import *
 # from models.unet_resnet import *
 
 from generator import *
@@ -45,10 +45,11 @@ def getModel(name):
     elif name == 'vgg19SEFCN':
         model = getVGG19SEFCN()
 
-    # elif name == 'unet_resnet':
-    #     model = getUnetRes()
-    # elif name == 'unet_resnet_se':
-    #     model = getUnetRes(se_version = True)
+    elif name == 'unet_resnet_upconv':
+        model = getUnetResUpconv()
+    elif name == 'unet_resnet_upconv_se':
+        model = getUnetResUpconv(se_version = True)
+
     # elif name == 'unet_resnet_upconv':
     #     model = getUnetResUpconv()
     # elif name == 'unet_resnet_upconv_se':
@@ -63,7 +64,10 @@ def getModel(name):
 
     return model
 
-model_names = ['vgg19FCN', 'vgg19SEFCN']#'unet_upconv', 'unet_upconv_se', 'resnetFCN', 'resnetSEFCN']
+model_names = ['vgg19FCN', 'vgg19SEFCN',
+        'unet_upconv', 'unet_upconv_se',
+        'unet_resnet_upconv', 'unet_resnet_upconv_se',
+        'resnetFCN', 'resnetSEFCN']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
