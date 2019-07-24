@@ -26,85 +26,85 @@ def getVGG19SE():
     img_input = layers.Input(shape=(256,256,1))
 
     x = layers.Conv2D(64, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block1_conv1')(img_input)
+        activation='relu',
+        padding='same',
+        name='block1_conv1')(img_input)
     x = layers.Conv2D(64, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block1_conv2')(x)
+        activation='relu',
+        padding='same',
+        name='block1_conv2')(x)
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
     x = squeeze_excite_block(x)
 
     # Block 2
     x = layers.Conv2D(128, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block2_conv1')(x)
+        activation='relu',
+        padding='same',
+        name='block2_conv1')(x)
     x = layers.Conv2D(128, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block2_conv2')(x)
+        activation='relu',
+        padding='same',
+        name='block2_conv2')(x)
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
     x = squeeze_excite_block(x)
 
     # Block 3
     x = layers.Conv2D(256, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block3_conv1')(x)
+        activation='relu',
+        padding='same',
+        name='block3_conv1')(x)
     x = layers.Conv2D(256, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block3_conv2')(x)
+        activation='relu',
+        padding='same',
+        name='block3_conv2')(x)
     x = layers.Conv2D(256, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block3_conv3')(x)
+        activation='relu',
+        padding='same',
+        name='block3_conv3')(x)
     x = layers.Conv2D(256, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block3_conv4')(x)
+        activation='relu',
+        padding='same',
+        name='block3_conv4')(x)
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
     x = squeeze_excite_block(x)
 
     # Block 4
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block4_conv1')(x)
+        activation='relu',
+        padding='same',
+        name='block4_conv1')(x)
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block4_conv2')(x)
+        activation='relu',
+        padding='same',
+        name='block4_conv2')(x)
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block4_conv3')(x)
+        activation='relu',
+        padding='same',
+        name='block4_conv3')(x)
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block4_conv4')(x)
+        activation='relu',
+        padding='same',
+        name='block4_conv4')(x)
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
     x = squeeze_excite_block(x)
 
     # Block 5
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block5_conv1')(x)
+        activation='relu',
+        padding='same',
+        name='block5_conv1')(x)
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block5_conv2')(x)
+        activation='relu',
+        padding='same',
+        name='block5_conv2')(x)
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block5_conv3')(x)
+        activation='relu',
+        padding='same',
+        name='block5_conv3')(x)
     x = layers.Conv2D(512, (3, 3),
-                      activation='relu',
-                      padding='same',
-                      name='block5_conv4')(x)
+        activation='relu',
+        padding='same',
+        name='block5_conv4')(x)
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
     x = squeeze_excite_block(x)
 
@@ -113,6 +113,11 @@ def getVGG19SE():
     return model
 
 def getVGG19SEFCN():
+
+    tf.reset_default_graph()
+    sess = tf.Session()
+    K.clear_session()
+    
     base_model = getVGG19SE()
 
     n_classes = 1

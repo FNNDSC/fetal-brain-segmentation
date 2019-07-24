@@ -128,6 +128,11 @@ def create_model(input_shape, se_version):
     return model
 
 def getUnetRes(se_version=False):
+
+    tf.reset_default_graph()
+    sess = tf.Session()
+    K.clear_session()
+    
     model = create_model((256,256,1), se_version)
     #print(model.summary())
     return model
