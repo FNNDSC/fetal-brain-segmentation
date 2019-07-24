@@ -1,5 +1,5 @@
+from losses import *
 from keras.models import Model
-from keras import layers
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.losses import binary_crossentropy
 from keras import backend as K
@@ -21,18 +21,21 @@ def bce_dice_loss(y_true, y_pred):
 def down_conv(init, nb_filter, se_version, no_down = False):
     x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
+    x = layers.BatchNormalization()(x)
 
     if se_version:
         x = squeeze_excite_block(x)
 
     if not no_down:
-        x = layers.MaxPooling2D(pool_size=(2, 2), padding='same')(x)
+        x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
     return x
 
 def up_conv(init, skip, nb_filter, se_version):
-    x = layers.Conv2DTranspose(nb_filter, 2, strides=(2, 2), activation='relu',
-        kernel_initializer = 'he_normal')(init)
+    x = layers.UpSampling2D(size = (2,2))(init)
+    x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
+        kernel_initializer = 'he_normal')(x)
+    x = layers.BatchNormalization()(x)
 
     if se_version:
         x = squeeze_excite_block(x)
@@ -43,9 +46,11 @@ def up_conv(init, skip, nb_filter, se_version):
 def res_block(init, nb_filter, se_version):
     x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
+    x = layers.BatchNormalization()(x)
 
     x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(x)
+    x = layers.BatchNormalization()(x)
 
     if se_version:
         x = squeeze_excite_block(x)
@@ -117,12 +122,12 @@ def create_model(input_shape, se_version):
     model = Model(inputs=inputs, outputs=classify)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-                        loss = binary_crossentropy)
+                        loss = binary_crossentropy,
+                        metrics = [dice_coef])
+
     return model
 
 def getUnetRes(se_version=False):
     model = create_model((256,256,1), se_version)
-    print(model.summary())
+    #print(model.summary())
     return model
-
-getUnetRes()

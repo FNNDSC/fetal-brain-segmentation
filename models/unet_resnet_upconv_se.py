@@ -1,6 +1,5 @@
 from losses import *
 from keras.models import Model
-from keras.layers import Input, Conv2D, Activation, BatchNormalization, UpSampling2D, MaxPooling2D, Dense, GlobalAveragePooling2D, Conv2DTranspose
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.losses import binary_crossentropy
 from keras import backend as K
@@ -20,9 +19,9 @@ def bce_dice_loss(y_true, y_pred):
 
 
 def down_conv(init, nb_filter, se_version, no_down = False):
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
+    x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
-    x = BatchNormalization()(x)
+    x = layers.BatchNormalization()(x)
 
     if se_version:
         x = squeeze_excite_block(x)
@@ -33,9 +32,9 @@ def down_conv(init, nb_filter, se_version, no_down = False):
     return x
 
 def up_conv(init, skip, nb_filter, se_version):
-    x = Conv2DTranspose(nb_filter, 2, strides=(2,2),
+    x = layers.Conv2DTranspose(nb_filter, 2, strides=(2,2),
                         activation='relu', kernel_initializer='he_normal')(init)
-    x = BatchNormalization()(x)
+    x = layers.BatchNormalization()(x)
 
     if se_version:
         x = squeeze_excite_block(x)
@@ -44,13 +43,13 @@ def up_conv(init, skip, nb_filter, se_version):
     return x
 
 def res_block(init, nb_filter, se_version):
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
+    x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
-    x = BatchNormalization()(x)
+    x = layers.BatchNormalization()(x)
 
-    x = Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
+    x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(x)
-    x = BatchNormalization()(x)
+    x = layers.BatchNormalization()(x)
 
     if se_version:
         x = squeeze_excite_block(x)
@@ -74,7 +73,7 @@ def squeeze_excite_block(input, ratio=16):
 
 
 def create_model(input_shape, se_version):
-    inputs = Input(shape=input_shape)
+    inputs = layers.Input(shape=input_shape)
     i = 0
 
     #0
@@ -118,7 +117,7 @@ def create_model(input_shape, se_version):
     x = up_conv(x, inputs, 16, se_version)
     x = res_block(x, 16, se_version)
 
-    classify = Conv2D(1, (1, 1), activation='sigmoid')(x)
+    classify = layers.Conv2D(1, (1, 1), activation='sigmoid')(x)
     model = Model(inputs=inputs, outputs=classify)
 
     model.compile(optimizer = Adam(lr = 1e-4),

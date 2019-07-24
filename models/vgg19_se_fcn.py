@@ -22,7 +22,7 @@ def squeeze_excite_block(input, ratio=16):
     x = layers.multiply([init, se])
     return x
 
-def VGG19SE():
+def getVGG19SE():
     img_input = layers.Input(shape=(256,256,1))
 
     x = layers.Conv2D(64, (3, 3),
@@ -113,7 +113,7 @@ def VGG19SE():
     return model
 
 def getVGG19SEFCN():
-    base_model = VGG19SE()
+    base_model = getVGG19SE()
 
     n_classes = 1
     stride = 32
