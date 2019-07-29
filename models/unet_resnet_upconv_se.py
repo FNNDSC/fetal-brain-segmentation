@@ -6,6 +6,8 @@ from keras import backend as K
 from keras import layers
 import numpy as np
 
+import tensorflow as tf
+
 def dice_loss(y_true, y_pred):
     smooth = 1.
     y_true_f = K.flatten(y_true)
@@ -127,7 +129,7 @@ def create_model(input_shape, se_version):
     return model
 
 def getUnetResUpconv(se_version=False):
-    
+
     tf.reset_default_graph()
     sess = tf.Session()
     K.clear_session()

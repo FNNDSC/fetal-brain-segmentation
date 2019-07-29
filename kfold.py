@@ -30,7 +30,7 @@ import tensorflow as tf
 def getModel(name):
     print('Working with %s'%name)
 
-    if name == 'unet_upconv':
+    if name == 'unet_upconv' or name == 'unet_upconv_bn':
         model = getUnetUpconv()
     elif name == 'unet_upconv_se':
         model = getSEUnetUpconv()
@@ -64,10 +64,14 @@ def getModel(name):
 
     return model
 
-model_names = ['vgg19FCN', 'vgg19SEFCN',
-        'unet_upconv', 'unet_upconv_se',
-        'unet_resnet_upconv', 'unet_resnet_upconv_se',
-        'resnetFCN', 'resnetSEFCN']
+
+model_names = ['unet_resnet_upconv', 'unet_resnet_upconv_se',
+        'resnetFCN', 'resnetSEFCN', 'unet_upconv_bn']
+
+# model_names = ['vgg19FCN', 'vgg19SEFCN',
+#         'unet_upconv', 'unet_upconv_se',
+#         'unet_resnet_upconv', 'unet_resnet_upconv_se',
+#         'resnetFCN', 'resnetSEFCN']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
@@ -80,9 +84,17 @@ for model_type in model_names:
 
     #Get data and generators
     dh = DataHandler()
-    start = 0
 
-    for i in range(start, len(kfold_indices)):
+    start = 0
+    end = len(kfold_indices)
+
+    if model_type == 'unet_upconv_se':
+        start = 5
+
+    else:
+        start = 0
+
+    for i in range(start, end):
 
         exp_name = 'kfold_%s_dice_DA_K%d'%(model_type, i)
 
