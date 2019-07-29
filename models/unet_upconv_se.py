@@ -55,12 +55,14 @@ def getSEUnetUpconv():
     conv4 = layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
     conv4 = layers.Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
     se4 = squeeze_excite_block(conv4)
-    pool4 = layers.MaxPooling2D(pool_size=(2, 2))(se4)
+    drop4 = layers.Dropout(0.5)(se4)
+    pool4 = layers.MaxPooling2D(pool_size=(2, 2))(drop4)
 
     #flat
     conv5 = layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
     conv5 = layers.Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
     se5 = squeeze_excite_block(conv5)
+    drop5 = layers.Dropout(0.5)(se5)
 
     # Decoding (upwards)
     up6 = layers.Conv2DTranspose(256, 2, strides=(2,2), activation='relu', kernel_initializer='he_normal')(se5)

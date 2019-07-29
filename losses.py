@@ -44,6 +44,6 @@ def dice_border_loss(y_true, y_pred):
 
 ### BCE
 def bce_dice_loss(y_true, y_pred):
-    return 0.5 * binary_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
+    return 0.5 * binary_crossentropy(y_true, y_pred) + dice_loss(y_true, y_pred)
 
 

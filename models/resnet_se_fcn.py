@@ -154,7 +154,6 @@ def getResnetSE50FCN():
     n_classes = 1
     stride = 32
 
-    input_tensor = Input(shape=(256, 256, 1))
     base_model = getResNet50()
 
     # add classifier
@@ -198,4 +197,4 @@ def getResnetSE50FCN():
 
     return model
 
-    
+

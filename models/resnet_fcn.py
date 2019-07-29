@@ -22,7 +22,7 @@ def getResnet50FCN():
     n_classes = 1
     stride = 32
 
-    input_tensor = Input(shape=(256, 256, 1))
+    input_tensor = layers.Input(shape=(256, 256, 1))
     base_model = ResNet50(weights=None, include_top=False, input_tensor=input_tensor)
 
     # add classifier

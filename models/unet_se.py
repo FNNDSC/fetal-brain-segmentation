@@ -52,18 +52,18 @@ def getSEUnet():
 
     conv4 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
     conv4 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
-    drop4 = Dropout(0.5)(conv4)
-    se4 = squeeze_excite_block(drop4)
-    pool4 = MaxPooling2D(pool_size=(2, 2))(se4)
+    se4 = squeeze_excite_block(conv4)
+    drop4 = Dropout(0.5)(se4)
+    pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
 
     #flat
     conv5 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
     conv5 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv5)
-    se5 = squeeze_excite_block(conv5)
-    drop5 = Dropout(0.5)(se5)
+    drop5 = Dropout(0.5)(conv5)
+    se5 = squeeze_excite_block(drop5)
 
     # Decoding (upwards)
-    up6 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop5))
+    up6 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(se5))
     merge6 = concatenate([se4,up6], axis = 3)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)

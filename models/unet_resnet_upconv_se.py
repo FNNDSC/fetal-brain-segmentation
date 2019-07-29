@@ -20,7 +20,7 @@ def bce_dice_loss(y_true, y_pred):
     return binary_crossentropy(y_true, y_pred) + (1 - dice_loss(y_true, y_pred))
 
 
-def down_conv(init, nb_filter, se_version, no_down = False):
+def down_conv(init, nb_filter, se_version):
     x = layers.Conv2D(nb_filter, (3, 3), padding='same', activation='relu',
         kernel_initializer = 'he_normal')(init)
     x = layers.BatchNormalization()(x)
@@ -28,8 +28,8 @@ def down_conv(init, nb_filter, se_version, no_down = False):
     if se_version:
         x = squeeze_excite_block(x)
 
-    if not no_down:
-        x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)
+
+    x = layers.MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
     return x
 
@@ -93,11 +93,12 @@ def create_model(input_shape, se_version):
     #3
     x = down_conv(x2, 256, se_version)
     x3 = res_block(x, 256, se_version)
-
+    x3 = layers.Dropout(0.5)(x3)
 
     #--------------- center ------------
     x = down_conv(x3, 512, se_version)
     x = res_block(x, 512, se_version)
+    x = layers.Dropout(0.5)(x)
     #--------------- center ------------
 
     #3

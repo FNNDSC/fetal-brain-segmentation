@@ -92,11 +92,12 @@ def create_model(input_shape, se_version):
     #3
     x = down_conv(x2, 256, se_version)
     x3 = res_block(x, 256, se_version)
-
+    x3 = layers.Dropout(0.5)(x3)
 
     #--------------- center ------------
     x = down_conv(x3, 512, se_version)
     x = res_block(x, 512, se_version)
+    x = layers.Dropout(0.5)(x)
     #--------------- center ------------
 
     #3
@@ -132,7 +133,7 @@ def getUnetRes(se_version=False):
     tf.reset_default_graph()
     sess = tf.Session()
     K.clear_session()
-    
+
     model = create_model((256,256,1), se_version)
     #print(model.summary())
     return model

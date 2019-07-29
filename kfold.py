@@ -1,5 +1,5 @@
 from datahandler import DataHandler
-# from models.unet_se import *
+from models.unet_se import *
 # from models.unet import *
 from models.resnet_se_fcn import *
 # from models.unet_resnet_se import *
@@ -7,6 +7,7 @@ from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
 from models.unet_upconv import *
+from models.unet_upconv_bn import *
 from models.unet_upconv_se import *
 from models.unet_resnet_upconv_se import *
 # from models.unet_resnet import *
@@ -30,8 +31,12 @@ import tensorflow as tf
 def getModel(name):
     print('Working with %s'%name)
 
-    if name == 'unet_upconv' or name == 'unet_upconv_bn':
+    if name == 'unet_upconv':
         model = getUnetUpconv()
+
+    elif name == 'unet_upconv_bn':
+        model = getUnetUpconvBN()
+
     elif name == 'unet_upconv_se':
         model = getSEUnetUpconv()
 
@@ -65,13 +70,10 @@ def getModel(name):
     return model
 
 
-model_names = ['unet_resnet_upconv', 'unet_resnet_upconv_se',
-        'resnetFCN', 'resnetSEFCN', 'unet_upconv_bn']
+model_names = ['unet_upconv_bn', 'resnetFCN', 'resnetSEFCN']
 
-# model_names = ['vgg19FCN', 'vgg19SEFCN',
-#         'unet_upconv', 'unet_upconv_se',
-#         'unet_resnet_upconv', 'unet_resnet_upconv_se',
-#         'resnetFCN', 'resnetSEFCN']
+# model_names = ['unet_upconv', 'unet_upconv_se',
+        # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
@@ -88,8 +90,8 @@ for model_type in model_names:
     start = 0
     end = len(kfold_indices)
 
-    if model_type == 'unet_upconv_se':
-        start = 5
+    if model_type == 'unet_upconv_bn':
+        start = 3
 
     else:
         start = 0
