@@ -6,6 +6,8 @@ from keras import backend as K
 from keras import layers
 import numpy as np
 
+import tensorflow as tf
+
 def dice_loss(y_true, y_pred):
     smooth = 1.
     y_true_f = K.flatten(y_true)
@@ -27,7 +29,7 @@ def down_conv(init, nb_filter, se_version, no_down = False):
         x = squeeze_excite_block(x)
 
     if not no_down:
-        x = MaxPooling2D(pool_size=(2, 2), padding='same')(x)
+        x = layers.MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
     return x
 
