@@ -1,16 +1,21 @@
 from datahandler import DataHandler
+
 from models.unet_se import *
-# from models.unet import *
+from models.unet import *
 from models.resnet_se_fcn import *
-# from models.unet_resnet_se import *
+from models.unet_resnet_se import *
 from models.resnet_fcn import *
 from models.vgg19_fcn import *
 from models.vgg19_se_fcn import *
 from models.unet_upconv import *
 from models.unet_upconv_bn import *
 from models.unet_upconv_se import *
+from models.unet_resnet import *
 from models.unet_resnet_upconv_se import *
-# from models.unet_resnet import *
+
+from models.unet_attention import *
+from models.vgg19_attention import *
+from models.vgg19_fcn_upconv import *
 
 from generator import *
 from params import *
@@ -54,6 +59,15 @@ def getModel(name):
         model = getUnetResUpconv()
     elif name == 'unet_resnet_upconv_se':
         model = getUnetResUpconv(se_version = True)
+        
+    elif name == 'unet_attention':
+        model = getAttentionUnet()
+        
+    elif name == 'vgg19FCN_attention':
+        model = getVGG19Attention()
+    
+    elif name == 'vgg19_fcn_upconv':
+        model = getVGG19FCN_upconv()
 
     # elif name == 'unet_resnet_upconv':
     #     model = getUnetResUpconv()
@@ -70,7 +84,7 @@ def getModel(name):
     return model
 
 
-model_names = ['resnetSEFCN']
+model_names = ['unet_attention', 'vgg19FCN_attention', 'vgg19_fcn_upconv']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
@@ -89,12 +103,6 @@ for model_type in model_names:
 
     start = 0
     end = len(kfold_indices)
-
-    if model_type == 'unet_upconv_bn':
-        start = 3
-
-    else:
-        start = 0
 
     for i in range(start, end):
 
