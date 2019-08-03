@@ -43,9 +43,9 @@ def binary_focal_loss(gamma=2., alpha=.25):
 
 def getUnet():
 
-    # tf.reset_default_graph()
-    # sess = tf.Session()
-    # K.clear_session()
+    tf.reset_default_graph()
+    sess = tf.Session()
+    K.clear_session()
 
     inputs = Input((256, 256, 1))
 

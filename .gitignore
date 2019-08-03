@@ -3,6 +3,8 @@
 *.json
 data/**/*
 logs/**/*
+no_weights_logs/**/*
+*.zip
 backup_logs/**/*
 weights/**/*
 Pipfile*

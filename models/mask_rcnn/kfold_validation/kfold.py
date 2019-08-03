@@ -9,6 +9,8 @@ from fbs_dataset import FBSDataset
 from imgaug import augmenters as iaa
 from mrcnn import model as modellib
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
 ROOT_DIR = os.path.abspath('../../../')
 sys.path.append(ROOT_DIR)
 

@@ -70,7 +70,7 @@ def getModel(name):
     return model
 
 
-model_names = ['unet_upconv_bn', 'resnetFCN', 'resnetSEFCN']
+model_names = ['resnetSEFCN']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
