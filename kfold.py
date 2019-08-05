@@ -112,6 +112,9 @@ for model_type in model_names:
     start = 0
     end = len(kfold_indices)
 
+    if model_type == 'unet_filter_attention':
+        start = 7
+
     for i in range(start, end):
 
         exp_name = 'kfold_%s_dice_DA_K%d'%(model_type, i)
