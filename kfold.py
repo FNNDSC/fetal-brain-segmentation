@@ -35,8 +35,6 @@ import argparse
 import sys
 import tensorflow as tf
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
-
 def getModel(name):
     print('Working with %s'%name)
 

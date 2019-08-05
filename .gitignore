@@ -10,3 +10,4 @@ weights/**/*
 Pipfile*
 json_models/**/*
 failed*/**/*
+*.pyc
