@@ -19,6 +19,8 @@ from models.vgg19_fcn_upconv import *
 from models.unet_f_attention import *
 from models.unet_f_g_attention import *
 
+from models.unet_bn import *
+
 from generator import *
 from params import *
 from callbacks import getCallbacks
@@ -76,6 +78,9 @@ def getModel(name):
 
     elif name == 'unet_filter_grid_attention':
         model = getUnetFilterGridAttention()
+
+    elif name == 'unet_bn':
+        model = getUnetBN()
 
     # elif name == 'unet_resnet_upconv':
     #     model = getUnetResUpconv()
