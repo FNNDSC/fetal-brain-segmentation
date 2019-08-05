@@ -10,12 +10,14 @@ from models.vgg19_se_fcn import *
 from models.unet_upconv import *
 from models.unet_upconv_bn import *
 from models.unet_upconv_se import *
-from models.unet_resnet import *
 from models.unet_resnet_upconv_se import *
 
 from models.unet_attention import *
 from models.vgg19_attention import *
 from models.vgg19_fcn_upconv import *
+
+from models.unet_f_attention import *
+from models.unet_f_g_attention import *
 
 from generator import *
 from params import *
@@ -32,6 +34,8 @@ from keras import backend as K
 import argparse
 import sys
 import tensorflow as tf
+
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 def getModel(name):
     print('Working with %s'%name)
@@ -59,15 +63,21 @@ def getModel(name):
         model = getUnetResUpconv()
     elif name == 'unet_resnet_upconv_se':
         model = getUnetResUpconv(se_version = True)
-        
+
     elif name == 'unet_attention':
         model = getAttentionUnet()
-        
+
     elif name == 'vgg19FCN_attention':
         model = getVGG19Attention()
-    
+
     elif name == 'vgg19_fcn_upconv':
         model = getVGG19FCN_upconv()
+
+    elif name == 'unet_filter_attention':
+        model = getUnetFilterAttention()
+
+    elif name == 'unet_filter_grid_attention':
+        model = getUnetFilterGridAttention()
 
     # elif name == 'unet_resnet_upconv':
     #     model = getUnetResUpconv()
@@ -84,7 +94,7 @@ def getModel(name):
     return model
 
 
-model_names = ['unet_attention', 'vgg19FCN_attention', 'vgg19_fcn_upconv']
+model_names = ['unet_filter_attention', 'unet_filter_grid_attention']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
@@ -116,6 +126,10 @@ for model_type in model_names:
         batch_size = params['batch_size']
         verbose = params['verbose']
 
+        #Get model and add weights
+        model = getModel(model_type)
+
+
         tr_images, tr_masks, te_images, te_masks = dh.getKFoldData(image_files,
                 mask_files, kfold_indices[i])
 
@@ -123,9 +137,6 @@ for model_type in model_names:
                 augmentation = False, batch_size=batch_size)
         val_generator = getGenerator(te_images, te_masks,
                 augmentation = False, batch_size=batch_size)
-
-        #Get model and add weights
-        model = getModel(model_type)
 
         model_json = model.to_json()
         with open(params['model_name'], "w") as json_file:

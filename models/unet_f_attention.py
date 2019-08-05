@@ -10,6 +10,7 @@ from keras import backend as K
 
 from keras.losses import binary_crossentropy
 
+import tensorflow as tf
 
 def squeeze_excite_block(input, ratio=16):
     init = input

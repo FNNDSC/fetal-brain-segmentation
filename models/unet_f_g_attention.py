@@ -38,7 +38,7 @@ def squeeze_excite_block(input, ratio=16):
     x = Multiply()([init, se])
     return x
 
-def getAttentionFilterGridUnet():
+def getUnetFilterGridAttention():
 
     tf.reset_default_graph()
     sess = tf.Session()
