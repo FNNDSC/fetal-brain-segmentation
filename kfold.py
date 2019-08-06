@@ -105,8 +105,7 @@ def getModel(name):
 
     return model
 
-model_names = ['unet_filter_attention', 'unet_filter_grid_attention', 'unet_bn',
-                'unet_bn_dice_loss', 'unet_bn_focal_loss', 'unet_bn_bce_dice_loss']
+model_names = ['unet_bn', 'unet_bn_dice_loss', 'unet_bn_focal_loss', 'unet_bn_bce_dice_loss']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
@@ -126,9 +125,6 @@ for model_type in model_names:
     start = 0
     end = len(kfold_indices)
 
-    if model_type == 'unet_filter_attention':
-        start = 7
-
     for i in range(start, end):
 
         exp_name = 'kfold_%s_dice_DA_K%d'%(model_type, i)
@@ -140,6 +136,12 @@ for model_type in model_names:
         epochs = params['epochs']
         batch_size = params['batch_size']
         verbose = params['verbose']
+        augmentation = False
+
+        if 'unet_bn' in model_type:
+            epochs = 50
+            batch_size *= 2
+            augmentation = True
 
         #Get model and add weights
         model = getModel(model_type)
@@ -149,9 +151,9 @@ for model_type in model_names:
                 mask_files, kfold_indices[i])
 
         train_generator = getGenerator(tr_images, tr_masks,
-                augmentation = False, batch_size=batch_size)
+                augmentation = augmentation, batch_size=batch_size)
         val_generator = getGenerator(te_images, te_masks,
-                augmentation = False, batch_size=batch_size)
+                augmentation = augmentation, batch_size=batch_size)
 
         model_json = model.to_json()
         with open(params['model_name'], "w") as json_file:
@@ -160,9 +162,14 @@ for model_type in model_names:
         Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
 
         #Train the model
+
+        steps_per_epoch = len(tr_images) / batch_size
+        if 'unet_bn' in model_type:
+            steps_per_epoch *= 2
+
         history = model.fit_generator(train_generator,
                 epochs=epochs,
-                steps_per_epoch = len(tr_images) / batch_size,
+                steps_per_epoch = steps_per_epoch,
                 validation_data = val_generator,
                 validation_steps = len(te_images) / batch_size,
                 verbose = verbose,
