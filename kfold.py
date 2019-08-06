@@ -97,7 +97,7 @@ def getModel(name):
     return model
 
 
-model_names = ['unet_filter_attention', 'unet_filter_grid_attention']
+model_names = ['unet_filter_attention', 'unet_filter_grid_attention', 'unet_bn']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
