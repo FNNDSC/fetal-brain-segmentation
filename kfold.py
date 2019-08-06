@@ -80,7 +80,16 @@ def getModel(name):
         model = getUnetFilterGridAttention()
 
     elif name == 'unet_bn':
-        model = getUnetBN()
+        model = getUnetBN('BCE')
+
+    elif name == 'unet_bn_dice_loss':
+        model = getUnetBN('dice')
+
+    elif name == 'unet_bn_focal_loss':
+        model = getUnetBN('focal')
+
+    elif name == 'unet_bn_bce_dice_loss':
+        model = getUnetBN('BCE_DICE')
 
     # elif name == 'unet_resnet_upconv':
     #     model = getUnetResUpconv()
@@ -96,8 +105,8 @@ def getModel(name):
 
     return model
 
-
-model_names = ['unet_filter_attention', 'unet_filter_grid_attention', 'unet_bn']
+model_names = ['unet_filter_attention', 'unet_filter_grid_attention', 'unet_bn',
+                'unet_bn_dice_loss', 'unet_bn_focal_loss', 'unet_bn_bce_dice_loss']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']

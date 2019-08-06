@@ -12,7 +12,8 @@ def getGenerator(images, masks, augmentation = False, batch_size=32):
         data_gen_args = dict(rescale=1./255,
             horizontal_flip = True,
             vertical_flip = True,
-            rotation_range = 90)
+            rotation_range = 90,
+            brightness_range = (0.5, 1))
     else:
         data_gen_args = dict(rescale=1./255)
 
