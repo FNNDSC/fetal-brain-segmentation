@@ -124,7 +124,7 @@ def getUnetBN(loss_function = 'BCE'):
     if loss_function == 'BCE':
         loss = binary_crossentropy
     elif loss_function == 'focal':
-        loss = binary_focal_loss(gamma=1., alpha=0.6)
+        loss = binary_focal_loss()
     elif loss_function == 'dice':
         loss = dice_loss
     elif loss_function == 'BCE_DICE':
