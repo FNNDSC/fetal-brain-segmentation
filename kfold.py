@@ -12,6 +12,7 @@ from models.unet_upconv_bn import *
 from models.unet_upconv_se import *
 from models.unet_resnet_upconv_se import *
 
+from models.unet_attention_bn import *
 from models.unet_attention import *
 from models.vgg19_attention import *
 from models.vgg19_fcn_upconv import *
@@ -91,24 +92,20 @@ def getModel(name):
     elif name == 'unet_bn_bce_dice_loss':
         model = getUnetBN('BCE_DICE')
 
-    # elif name == 'unet_resnet_upconv':
-    #     model = getUnetResUpconv()
-    # elif name == 'unet_resnet_upconv_se':
-    #     model = getUnetResUpconv(se_version = True)
-    # elif name == 'unetResnet18':
-    #     model = getUnetResnet18()
-    # elif name == 'unetResnet18SE':
-    #     model = getUnetResnet18(se_version = True)
+    elif name == 'unet_attention_bn_dice_loss':
+        model = getAttentionUnetBN('dice')
+
+    elif name == 'unet_attention_bn_bce_dice_loss':
+        model = getAttentionUnetBN('BCE_DICE')
+
     else:
         print('error')
         return -1
 
     return model
 
-model_names = ['unet_bn', 'unet_bn_dice_loss', 'unet_bn_focal_loss', 'unet_bn_bce_dice_loss']
+model_names = ['unet_attention_bn_dice_loss', 'unet_attention_bn_bce_dice_loss']
 
-# model_names = ['unet_upconv', 'unet_upconv_se',
-        # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
 
 for model_type in model_names:
     image_files, mask_files = load_data_files('data/kfold_data/')
@@ -138,14 +135,13 @@ for model_type in model_names:
         verbose = params['verbose']
         augmentation = False
 
-        if 'unet_bn' in model_type:
+        if 'unet_bn' in model_type or 'unet_attention_bn' in model_type:
             epochs = 50
             batch_size *= 2
             augmentation = True
 
         #Get model and add weights
         model = getModel(model_type)
-
 
         tr_images, tr_masks, te_images, te_masks = dh.getKFoldData(image_files,
                 mask_files, kfold_indices[i])
@@ -164,7 +160,7 @@ for model_type in model_names:
         #Train the model
 
         steps_per_epoch = len(tr_images) / batch_size
-        if 'unet_bn' in model_type:
+        if 'unet_bn' in model_type or 'unet_attention_bn' in model_type::
             steps_per_epoch *= 2
 
         history = model.fit_generator(train_generator,
