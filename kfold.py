@@ -18,7 +18,6 @@ from models.vgg19_attention import *
 from models.vgg19_fcn_upconv import *
 
 from models.unet_f_attention import *
-from models.unet_f_g_attention import *
 
 from models.unet_bn import *
 
@@ -160,7 +159,7 @@ for model_type in model_names:
         #Train the model
 
         steps_per_epoch = len(tr_images) / batch_size
-        if 'unet_bn' in model_type or 'unet_attention_bn' in model_type::
+        if 'unet_bn' in model_type or 'unet_attention_bn' in model_type:
             steps_per_epoch *= 2
 
         history = model.fit_generator(train_generator,
