@@ -17,7 +17,6 @@ from models.vgg19_attention import *
 from models.vgg19_fcn_upconv import *
 
 from models.unet_f_attention import *
-from models.unet_f_g_attention import *
 
 from models.unet_bn import *
 
@@ -36,7 +35,7 @@ from keras import backend as K
 import argparse
 import sys
 import tensorflow as tf
-
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 def getModel(name):
     print('Working with %s'%name)
 
@@ -79,7 +78,7 @@ def getModel(name):
     elif name == 'unet_filter_grid_attention':
         model = getUnetFilterGridAttention()
 
-    elif name == 'unet_bn':
+    elif name == 'unet_bn_bce_loss':
         model = getUnetBN('BCE')
 
     elif name == 'unet_bn_dice_loss':
@@ -105,7 +104,7 @@ def getModel(name):
 
     return model
 
-model_names = ['unet_bn', 'unet_bn_dice_loss', 'unet_bn_focal_loss', 'unet_bn_bce_dice_loss']
+model_names = ['unet_bn_bce_dice_loss', 'unet_bn_focal_loss']
 
 # model_names = ['unet_upconv', 'unet_upconv_se',
         # 'unet_resnet_upconv', 'unet_resnet_upconv_se']
@@ -123,6 +122,10 @@ for model_type in model_names:
     dh = DataHandler()
 
     start = 0
+
+    if model_type == 'unet_bn_bce_dice_loss':
+        start = 4
+
     end = len(kfold_indices)
 
     for i in range(start, end):
@@ -139,7 +142,7 @@ for model_type in model_names:
         augmentation = False
 
         if 'unet_bn' in model_type:
-            epochs = 50
+            epochs = 25
             batch_size *= 2
             augmentation = True
 
@@ -153,7 +156,7 @@ for model_type in model_names:
         train_generator = getGenerator(tr_images, tr_masks,
                 augmentation = augmentation, batch_size=batch_size)
         val_generator = getGenerator(te_images, te_masks,
-                augmentation = augmentation, batch_size=batch_size)
+                augmentation = False, batch_size=batch_size)
 
         model_json = model.to_json()
         with open(params['model_name'], "w") as json_file:
