@@ -69,7 +69,7 @@ def getModel(name):
     elif name == 'unet_attention':
         model = getAttentionUnet()
 
-    elif name == 'vgg19FCN_attention':
+    elif name == 'vgg19FCN_attention_good':
         model = getVGG19Attention()
 
     elif name == 'vgg19_fcn_upconv':

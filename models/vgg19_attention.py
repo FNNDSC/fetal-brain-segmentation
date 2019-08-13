@@ -48,7 +48,7 @@ def getVGG19Attention():
     x = base_model.get_layer('block4_pool').output
     sh2 = x
     sh1 = layers.UpSampling2D(size=(2), interpolation='bilinear')(sh1)
-    x = attention_block(512, x, sh1)
+    x = attention_block(512, sh1, x)
     
     x = layers.Dropout(0.5)(x)
     x = layers.Conv2D(n_classes,1,name = 'pred_16',padding = 'valid', kernel_initializer='he_normal')(x)
@@ -62,7 +62,7 @@ def getVGG19Attention():
     # 8s
     x = base_model.get_layer('block3_pool').output
     sh2 = layers.UpSampling2D(size=(2), interpolation='bilinear')(sh2)
-    x = attention_block(256, x, sh2)
+    x = attention_block(256, sh2, x)
 
     x = layers.Dropout(0.5)(x)
     x = layers.Conv2D(n_classes,1,name = 'pred_8',padding = 'valid', kernel_initializer='he_normal')(x)
