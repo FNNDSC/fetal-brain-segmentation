@@ -67,7 +67,7 @@ def getModel(name):
     elif name == 'unet_attention':
         model = getAttentionUnet()
 
-    elif name == 'vgg19FCN_attention':
+    elif name == 'vgg19FCN_attention_good':
         model = getVGG19Attention()
 
     elif name == 'vgg19_fcn_upconv':
@@ -103,7 +103,7 @@ def getModel(name):
 
     return model
 
-model_names = ['unet_attention_bn_dice_loss', 'unet_attention_bn_bce_dice_loss']
+model_names = ['vgg19FCN_attention_good']
 
 
 for model_type in model_names:
@@ -135,7 +135,6 @@ for model_type in model_names:
         augmentation = False
 
         if 'unet_bn' in model_type or 'unet_attention_bn' in model_type:
-            epochs = 50
             batch_size *= 2
             augmentation = True
 

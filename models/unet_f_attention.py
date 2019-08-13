@@ -58,23 +58,23 @@ def getUnetFilterAttention():
     drop5 = Dropout(0.5)(conv5)
 
     # Decoding (upwards)
-    se_att1 = squeeze_excite_block(UpSampling2D(size = (2,2))(drop5))
-    merge6 = concatenate([drop4, se_att1], axis = 3)
+    se_att1 = squeeze_excite_block(drop4)
+    merge6 = concatenate([UpSampling2D(size = (2,2))(drop5), se_att1], axis = 3)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
     conv6 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
 
-    se_att2 = squeeze_excite_block(UpSampling2D(size = (2,2))(conv6))
-    merge7 = concatenate([conv3, se_att2], axis = 3)
+    se_att2 = squeeze_excite_block(conv3)
+    merge7 = concatenate([UpSampling2D(size = (2,2))(conv6), se_att2], axis = 3)
     conv7 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge7)
     conv7 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv7)
 
-    se_att3 = squeeze_excite_block(UpSampling2D(size = (2,2))(conv7))
-    merge8 = concatenate([conv2, se_att3], axis = 3)
+    se_att3 = squeeze_excite_block(conv2)
+    merge8 = concatenate([UpSampling2D(size = (2,2))(conv7), se_att3], axis = 3)
     conv8 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
     conv8 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
 
-    se_att4 = squeeze_excite_block(UpSampling2D(size = (2,2))(conv8))
-    merge9 = concatenate([conv1, se_att4], axis = 3)
+    se_att4 = squeeze_excite_block(conv1)
+    merge9 = concatenate([UpSampling2D(size = (2,2))(conv8), se_att4], axis = 3)
     conv9 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge9)
     conv9 = Conv2D(32, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv9)
 

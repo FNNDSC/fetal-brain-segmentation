@@ -47,6 +47,7 @@ def train(trainConfig, train_dataset, val_dataset, augment = True, pretrained_co
         augmentation = iaa.SomeOf((0, 6), [
             iaa.Fliplr(0.5),
             iaa.Flipud(0.5),
+            iaa.Multiply((0.5, 1.5), per_channel=0.5),
             iaa.OneOf([iaa.Affine(rotate=90),
                 iaa.Affine(rotate=180),
                 iaa.Affine(rotate=270)])])
@@ -83,7 +84,7 @@ for i in range(len(kfold_indices)):
     dataset_train, len_dataset_train, dataset_val, len_dataset_val = getDatasets(
             kfold_indices[i]['train'], kfold_indices[i]['val'])
 
-    configParams = {'da': False, 'mask_dim': 28, 'wl': True, 'tl': False, 'kfold_i': i,
+    configParams = {'da': True, 'mask_dim': 28, 'wl': False, 'tl': False, 'kfold_i': i,
             'img_per_gpu': 2, 'train_steps': len_dataset_train,
             'val_steps': len_dataset_val, 'epochs': epochs, 'n_folds': n_folds}
 
