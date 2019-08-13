@@ -21,7 +21,7 @@ class FBSConfig(Config):
     # then 0.5 is the minimum anyway as it picks between brain and BG
     DETECTION_MIN_CONFIDENCE = 0
 
-    USE_MINI_MASK = False
+    USE_MINI_MASK = True
 
     IMAGE_RESIZE_MODE = "square"
     IMAGE_MIN_DIM = 256
@@ -63,6 +63,13 @@ class TrainFBSConfig(FBSConfig):
         if tl:
             base_name += '_tl'
         if wl:
+            self.LOSS_WEIGHTS={
+                    'rpn_class_loss': 0.5,
+                    'rpn_bbox_loss': 0.5,
+                    'mrcnn_class_loss': 0.5,
+                    'mrcnn_bbox_loss': 0.5,
+                    'mrcnn_mask_loss': 1.
+                    }
             base_name += '_wl'
         base_name += '_%d'%epochs
         base_name += '_%d'%mask_dim
