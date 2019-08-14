@@ -24,7 +24,16 @@ from models.experimental_models.unet_filter_attention import *
 def getModel(name):
     print('Working with %s'%name)
 
-    if name == 'unet_upconv':
+    if name == 'unet':
+        model = getUnet()
+
+    elif name == 'unet_bn':
+        model = getUnetBN('BCE_DICE')
+
+    elif name == 'unet_se':
+        model = getSEUnet()
+
+    elif name == 'unet_upconv':
         model = getUnetUpconv()
 
     elif name == 'unet_upconv_bn':
@@ -46,7 +55,7 @@ def getModel(name):
 
     elif name == 'unet_resnet_upconv':
         model = getUnetResUpconv()
-        
+
     elif name == 'unet_resnet_upconv_se':
         model = getUnetResUpconv(se_version = True)
 
