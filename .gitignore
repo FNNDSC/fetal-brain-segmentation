@@ -11,3 +11,5 @@ Pipfile*
 json_models/**/*
 failed*/**/*
 *.pyc
+.DS_Store
+__pycache__/**/*
