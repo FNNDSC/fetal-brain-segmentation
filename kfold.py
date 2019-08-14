@@ -1,30 +1,16 @@
+import os
+import sys
+ROOT_DIR = os.path.abspath('.')
+sys.path.append(ROOT_DIR)
+
 from datahandler import DataHandler
 
-from models.unet_se import *
-from models.unet import *
-from models.resnet_se_fcn import *
-from models.unet_resnet_se import *
-from models.resnet_fcn import *
-from models.vgg19_fcn import *
-from models.vgg19_se_fcn import *
-from models.unet_upconv import *
-from models.unet_upconv_bn import *
-from models.unet_upconv_se import *
-from models.unet_resnet_upconv_se import *
-
-from models.unet_attention_bn import *
-from models.unet_attention import *
-from models.vgg19_attention import *
-from models.vgg19_fcn_upconv import *
-
-from models.unet_f_attention import *
-
-from models.unet_bn import *
+from model_provider import getModel
 
 from generator import *
 from params import *
 from callbacks import getCallbacks
-from data_loader import *
+from kfold_data_loader import *
 
 from tqdm import tqdm
 import os
@@ -37,80 +23,13 @@ import argparse
 import sys
 import tensorflow as tf
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
-def getModel(name):
-    print('Working with %s'%name)
-
-    if name == 'unet_upconv':
-        model = getUnetUpconv()
-
-    elif name == 'unet_upconv_bn':
-        model = getUnetUpconvBN()
-
-    elif name == 'unet_upconv_se':
-        model = getSEUnetUpconv()
-
-    elif name == 'resnetFCN':
-        model = getResnet50FCN()
-    elif name == 'resnetSEFCN':
-        model = getResnetSE50FCN()
-
-    elif name == 'vgg19FCN':
-        model = getVGG19FCN()
-    elif name == 'vgg19SEFCN':
-        model = getVGG19SEFCN()
-
-    elif name == 'unet_resnet_upconv':
-        model = getUnetResUpconv()
-    elif name == 'unet_resnet_upconv_se':
-        model = getUnetResUpconv(se_version = True)
-
-    elif name == 'unet_attention':
-        model = getAttentionUnet()
-
-    elif name == 'vgg19FCN_attention_good':
-        model = getVGG19Attention()
-
-    elif name == 'vgg19_fcn_upconv':
-        model = getVGG19FCN_upconv()
-
-    elif name == 'unet_filter_attention':
-        model = getUnetFilterAttention()
-
-    elif name == 'unet_filter_grid_attention':
-        model = getUnetFilterGridAttention()
-
-    elif name == 'unet_bn_bce_loss':
-        model = getUnetBN('BCE')
-
-    elif name == 'unet_bn_dice_loss':
-        model = getUnetBN('dice')
-
-    elif name == 'unet_bn_focal_loss':
-        model = getUnetBN('focal')
-
-    elif name == 'unet_bn_bce_dice_loss':
-        model = getUnetBN('BCE_DICE')
-
-    elif name == 'unet_attention_bn_dice_loss':
-        model = getAttentionUnetBN('dice')
-
-    elif name == 'unet_attention_bn_bce_dice_loss':
-        model = getAttentionUnetBN('BCE_DICE')
-
-    else:
-        print('error')
-        return -1
-
-    return model
-
-model_names = ['unet_attention_bn_bce_dice_loss', 'unet_bn_focal_loss']
-
+#list of model names you want to train,
+#the logs will be saved with these names
+model_names = ['unet']
 
 for model_type in model_names:
+    #load data files and split into 10-fold        
     image_files, mask_files = load_data_files('data/kfold_data/')
-
     skf = getKFolds(image_files, mask_files, n=10)
 
     kfold_indices = []
@@ -121,14 +40,11 @@ for model_type in model_names:
     dh = DataHandler()
 
     start = 0
-
-    if model_type == 'unet_bn_focal_loss':
-        start = 3
-
     end = len(kfold_indices)
 
     for i in range(start, end):
 
+        #create the experiment name for each subfolder
         exp_name = 'kfold_%s_dice_DA_K%d'%(model_type, i)
 
         #get parameters
@@ -140,33 +56,37 @@ for model_type in model_names:
         verbose = params['verbose']
         augmentation = False
 
+        steps_per_epoch = len(tr_images) / batch_size
+
+        #This I used because using augmentation I double the number of trainig data,
+        #but I also increase de batch size
         if 'unet_bn' in model_type or 'unet_attention_bn' in model_type:
             batch_size *= 2
             augmentation = True
+            steps_per_epoch = 2 * len(tr_images) / batch_size
 
         #Get model and add weights
         model = getModel(model_type)
 
+        #get the data for each fold
         tr_images, tr_masks, te_images, te_masks = dh.getKFoldData(image_files,
                 mask_files, kfold_indices[i])
 
+        #get generators
         train_generator = getGenerator(tr_images, tr_masks,
                 augmentation = augmentation, batch_size=batch_size)
         val_generator = getGenerator(te_images, te_masks,
                 augmentation = False, batch_size=batch_size)
 
+        #save model file        
         model_json = model.to_json()
         with open(params['model_name'], "w") as json_file:
              json_file.write(model_json)
 
+        #get callbacks
         Checkpoint, EarlyStop, ReduceLR, Logger, TenBoard = getCallbacks(params)
 
         #Train the model
-
-        steps_per_epoch = len(tr_images) / batch_size
-        if 'unet_bn' in model_type or 'unet_attention_bn' in model_type:
-            steps_per_epoch *= 2
-
         history = model.fit_generator(train_generator,
                 epochs=epochs,
                 steps_per_epoch = steps_per_epoch,
@@ -174,4 +94,3 @@ for model_type in model_names:
                 validation_steps = len(te_images) / batch_size,
                 verbose = verbose,
                 callbacks = [Checkpoint, Logger, TenBoard])
-

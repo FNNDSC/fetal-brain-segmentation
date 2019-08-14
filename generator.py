@@ -4,10 +4,14 @@ from keras.preprocessing.image import ImageDataGenerator
 def resetSeed():
     np.random.seed(1)
 
+
+#gets image generators for training and validation
 def getGenerator(images, masks, augmentation = False, batch_size=32):
     resetSeed()
     seed = 1
 
+    #if there is no augmentation the img is only rescaled by
+    #dividing by 255 this ensures a range of 0-1 for all pixel values
     if augmentation:
         data_gen_args = dict(rescale=1./255,
             horizontal_flip = True,
@@ -17,6 +21,7 @@ def getGenerator(images, masks, augmentation = False, batch_size=32):
     else:
         data_gen_args = dict(rescale=1./255)
 
+    #do the same for img and masks to ensure mask stays the same
     image_datagen = ImageDataGenerator(**data_gen_args)
     mask_datagen = ImageDataGenerator(**data_gen_args)
 

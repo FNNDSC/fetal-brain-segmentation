@@ -8,19 +8,13 @@ from losses import *
 import math
 
 from datahandler import DataHandler
-from models.unet_se import *
-from models.unet import *
-from models.resnet_fcn import *
-from models.resnet_se_fcn import *
-from models.resnet_fcn import *
-from models.vgg19_fcn import *
-from models.vgg19_se_fcn import *
-# from models.unet_resnet import *
+
+from model_provider import getModel
 
 from generator import *
 from params import *
 from callbacks import getCallbacks
-from data_loader import *
+from kfold_data_loader import *
 
 from tqdm import tqdm
 import os
@@ -32,35 +26,6 @@ from keras import backend as K
 import argparse
 import sys
 import random
-
-
-def getModel(name):
-    if name == 'unet':
-        print('using unet as first model')
-        model = getUnet()
-    elif name == 'resnetFCN':
-        print('using resnetFCN as first model')
-        model = getResnet50FCN()
-    elif model_type == 'resnetSEFCN':
-        print('using resnetSEFCN as first model')
-        model = getResnetSE50FCN()
-    elif name == 'vgg19FCN':
-        print('using vgg19FCN as first model')
-        model = getVGG19FCN()
-    elif name == 'vgg19SEFCN':
-        print('using vgg19SEFCN as first model')
-        model = getVGG19SEFCN()
-    elif name == 'UnetResNet18':
-        print('using UnetResNet18 as first model')
-        model = getUnetResnet18()
-    elif name == 'UnetResNet18SE':
-        print('using UnetResNet18SE as first model')
-        model = getUnetResnet18(se_version = True)
-    else:
-        print('using UnetResNet18SE as first model')
-        model = getSEUnet()
-
-    return model
 
 def lstmGenerator(images, masks, batch_size, pre_model, pre_graph):
     reset = False

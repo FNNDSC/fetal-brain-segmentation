@@ -1,5 +1,7 @@
 import os
 
+#helped function to set all params of the training, modify here and it will be used in all
+#other files
 def getParams(exp_name, unet_type='unet', is_lstm = False):
     # General Training
     epochs = 25

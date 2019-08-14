@@ -1,5 +1,5 @@
 from datahandler import DataHandler
-from models.unet import *
+from models.unet.unet import *
 from generator import *
 from params import *
 from callbacks import getCallbacks

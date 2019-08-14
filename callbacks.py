@@ -1,5 +1,6 @@
 from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 
+#function to get keras specific callbacks
 def getCallbacks(params):
     verbose = params['verbose']
     val_to_monitor = params['val_to_monitor']

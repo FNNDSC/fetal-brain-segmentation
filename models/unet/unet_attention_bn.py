@@ -102,7 +102,7 @@ def getAttentionUnetBN(loss_function = 'dice'):
 
     conv10 = Conv2D(1, 1, activation = 'sigmoid')(conv9)
 
-    model = Model(input = inputs, output = conv10)
+    model = Model(inputs = inputs, outputs = conv10)
 
     if loss_function == 'dice':
         loss = dice_loss

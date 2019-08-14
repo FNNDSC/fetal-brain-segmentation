@@ -190,7 +190,7 @@ def getResnetSE50FCN():
     x = layers.add([x, pred_16s])
     x = layers.Activation('sigmoid')(x)
 
-    model = Model(input=base_model.input,output=x)
+    model = Model(inputs=base_model.input,outputs=x)
     model.compile(optimizer = Adam(lr = 1e-4),
             loss = binary_crossentropy,
             metrics = [dice_coef])

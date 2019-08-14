@@ -8,8 +8,6 @@ import nibabel as nib
 from medpy.io import load
 
 class DataHandler:
-
-
     def __init__(self):
         self._imgs_train_dir = 'data/train/images/*'
         self._imgs_test_dir = 'data/test/images/*'

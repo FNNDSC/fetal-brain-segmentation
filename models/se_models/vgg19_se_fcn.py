@@ -108,7 +108,7 @@ def getVGG19SE():
     x = layers.MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
     x = squeeze_excite_block(x)
 
-    model = Model(input=img_input,output=x)
+    model = Model(inputs=img_input,outputs=x)
 
     return model
 
@@ -156,7 +156,7 @@ def getVGG19SEFCN():
     x = layers.add([x, pred_16s])
     x = layers.Activation('sigmoid')(x)
 
-    model = Model(input=base_model.input,output=x)
+    model = Model(inputs=base_model.input,outputs=x)
     model.compile(optimizer = Adam(lr = 1e-4),
               loss = binary_crossentropy,
               metrics = [dice_coef])
