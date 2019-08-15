@@ -4,6 +4,7 @@
 data/**/*
 logs/**/*
 no_weights_logs/**/*
+logs_only_last_weight/**/*
 *.zip
 backup_logs/**/*
 weights/**/*

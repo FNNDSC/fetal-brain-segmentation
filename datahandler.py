@@ -74,6 +74,7 @@ class DataHandler:
                 img = np.array(img_slices[:,:,i])
                 mask = np.array(mask_slices[:,:,i])
 
+                #resize images into 256x256
                 if img.shape[0] != 256 or img.shape[1] != 256:
                     img = cv2.resize(img, dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
                     mask = cv2.resize(mask, dsize=(256, 256), interpolation=cv2.INTER_CUBIC)

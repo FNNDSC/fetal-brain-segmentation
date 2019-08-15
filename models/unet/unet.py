@@ -68,7 +68,7 @@ def getUnet():
     model = Model(inputs = inputs, outputs = conv10)
 
     model.compile(optimizer = Adam(lr = 1e-4),
-                        loss=binary_crossentropy, #[binary_focal_loss(gamma=1., alpha=0.6)],
+                        loss=binary_crossentropy,
                         metrics = [dice_coef])
 
     return model

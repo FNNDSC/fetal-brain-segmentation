@@ -84,11 +84,7 @@ for i in range(5, 10):
     dataset_train, len_dataset_train, dataset_val, len_dataset_val = getDatasets(
             kfold_indices[i]['train'], kfold_indices[i]['val'])
 
-<<<<<<< HEAD
     configParams = {'da': True, 'mask_dim': 28, 'wl': True, 'tl': True, 'kfold_i': i,
-=======
-    configParams = {'da': True, 'mask_dim': 28, 'wl': False, 'tl': False, 'kfold_i': i,
->>>>>>> 0e776e43d79ff5090846c95703eb9cbfac9fa0ad
             'img_per_gpu': 2, 'train_steps': len_dataset_train,
             'val_steps': len_dataset_val, 'epochs': epochs, 'n_folds': n_folds}
 

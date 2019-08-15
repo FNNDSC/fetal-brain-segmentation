@@ -24,9 +24,26 @@ from models.experimental_models.unet_filter_attention import *
 def getModel(name):
     print('Working with %s'%name)
 
+    #the ones that worked the most
     if name == 'unet':
         model = getUnet()
 
+    elif name == 'unet_bn_dice_loss':
+        model = getUnetBN('dice')
+
+    elif name == 'unet_bn_focal_loss':
+        model = getUnetBN('focal')
+
+    elif name == 'unet_bn_bce_dice_loss':
+        model = getUnetBN('BCE_DICE')
+
+    elif name == 'unet_attention_bn_dice_loss':
+        model = getAttentionUnetBN('dice')
+
+    elif name == 'unet_attention_bn_bce_dice_loss':
+        model = getAttentionUnetBN('BCE_DICE')
+
+    #experiments
     elif name == 'unet_bn':
         model = getUnetBN('BCE_DICE')
 
@@ -73,21 +90,6 @@ def getModel(name):
 
     elif name == 'unet_bn_bce_loss':
         model = getUnetBN('BCE')
-
-    elif name == 'unet_bn_dice_loss':
-        model = getUnetBN('dice')
-
-    elif name == 'unet_bn_focal_loss':
-        model = getUnetBN('focal')
-
-    elif name == 'unet_bn_bce_dice_loss':
-        model = getUnetBN('BCE_DICE')
-
-    elif name == 'unet_attention_bn_dice_loss':
-        model = getAttentionUnetBN('dice')
-
-    elif name == 'unet_attention_bn_bce_dice_loss':
-        model = getAttentionUnetBN('BCE_DICE')
 
     else:
         print('error')
